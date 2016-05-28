@@ -12,10 +12,4 @@ Not a developer? Easy, just make a request, and see it developed by the communit
 ## Reference 
 
 - Interface
-    Get_app
-    Get_front_window
-    Get_anchor
-    Get_statelist
-
-    Open(window_id)
-    Close(window_id)
+  Until it stabilises, refer to the CoffeeScript class `WindowAccessor` in `read_windows.coffee`.
