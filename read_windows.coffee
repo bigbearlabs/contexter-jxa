@@ -1,6 +1,22 @@
 # ---
-# doit: | 
-#   `coffee -cp #{file} | osascript -l JavaScript`
+# doit: 
+#   cmd: | 
+#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id}
+#   args:
+#     bundle_id:
+#       - com.apple.Safari
+#       
+# test:
+#   args:
+#     bundle_id:
+#       - com.apple.Safari
+#       - com.apple.Finder
+#       - com.google.Chrome.canary
+#       - com.torusknot.SourceTreeNotMAS
+#       - com.apple.spotlight
+#       - com.apple.dt.Xcode
+#       - com.apple.iWork.Keynote
+#       - com.apple.iWork.Numbers
 # ---
 
 
@@ -100,15 +116,7 @@ windowAccessor = (app) ->
 
   # TEST VALUES uncomment lines and run without any params to test the script on a specific app.
   if argv.length == 0 or !app or app == ''
-    app = 'com.apple.Safari'
-    # app = 'com.apple.Finder'
-    # app = "com.google.Chrome.canary"
-    # app = "com.torusknot.SourceTreeNotMAS"
-    # app = "com.apple.spotlight"
-    app = "com.apple.dt.Xcode"
-    # app = "com.apple.iWork.Keynote"
-    # app = "com.apple.iWork.Numbers"
-    # filterWindowId = 15248
+    throw "no args"
 
   returnFirstSuccessful [
     ->
