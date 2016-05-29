@@ -93,7 +93,7 @@ windowAccessor = (app) ->
 # END
 
 
-run = (argv) ->
+@run = (argv) ->
   'use strict'
   app = argv[0]
   filterWindowId = argv[1]
@@ -221,8 +221,3 @@ returnFirstSuccessful = (fns) ->
   throw 'no calls were successful.'
   return
 
-
-
-ObjC.import('Foundation')
-args = $.NSProcessInfo.processInfo.arguments
-return run(args)
