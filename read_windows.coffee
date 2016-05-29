@@ -186,15 +186,7 @@
   filter_window_id = argv[1]
   # TEST VALUES uncomment lines and run without any params to test the script on a specific app.
   if argv.length == 0 or !app or app == ''
-    # app = 'com.apple.Safari'
-    # app = "com.apple.Finder"
-    # app = "com.google.Chrome.canary"
-    app = "com.torusknot.SourceTreeNotMAS"
-    # app = "com.apple.spotlight"
-    # app = "com.apple.dt.Xcode"
-    # app = "com.apple.iWork.Keynote"
-    # app = "com.apple.iWork.Numbers"
-    # filter_window_id = 15248
+    throw "no args"
   try
     return read_windows1(app, filter_window_id)
   catch e
