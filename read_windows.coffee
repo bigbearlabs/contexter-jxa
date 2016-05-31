@@ -156,7 +156,7 @@ elementsFrom = (window, windowAccessor) ->
 
     elements.map (element) ->
       index = elements.indexOf(element)
-      isCurrent = if visibleTabIndex then visibleTabIndex == index else null
+      isCurrent = if visibleTabIndex then visibleTabIndex - 1 == index else null
       
       {
         name: windowAccessor.getElementName(element)
