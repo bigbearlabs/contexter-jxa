@@ -1,7 +1,7 @@
 # ---
 # doit: 
 #   cmd: | 
-#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id}
+#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id} | jq
 #   args:
 #     bundle_id:
 #       - com.apple.Safari
