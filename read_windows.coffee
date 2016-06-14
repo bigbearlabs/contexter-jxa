@@ -4,13 +4,13 @@
 #     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id}
 #   args:
 #     bundle_id:
-#       - com.apple.Safari
+#       - com.torusknot.SourceTreeNotMAS
 #       
 # test:
 #   args:
 #     bundle_id:
 #       - com.apple.Safari
-#       - com.apple.Finder
+#       - com.apple.finder
 #       - com.google.Chrome.canary
 #       - com.torusknot.SourceTreeNotMAS
 #       - com.apple.spotlight
@@ -20,20 +20,44 @@
 # ---
 
 
-
 # BEGIN extractable interface
+# NOTE This the skeleton upon which customisers can return appropriate values to record context.
+# The skeleton implementation works with 'typical' applescriptable document-based apps, and some common browsers.
+# 
+# We still need to find a good way to allow for an extension of this class in another file, without dragging in a complicated requiring mechanism.
+# A tempting option is to just concatenate the scripts files in the right order, and rely on documentation to 'expose' the extensible prototype.
 
-# finder
 class WindowAccessor
 
-  # window-level accessors
+  # most customisation-relevant
 
-  getId: (window) ->
-    window.id()
+  getUrl: (element) ->
+    returnFirstSuccessful [
+      ->
+        element.url()
+      ->
+        # keynote
+        element.file().toString()
+    ]
 
-  getName: (window) ->
-    window.name()
 
+  getAnchor: (elements) ->
+    if elements.length == 1
+      @getUrl elements[0]
+
+    else
+      # for multiple elements, return the one marked as current.
+      if current_elem = elements.find((e) ->
+          if e and e.current
+            e.current
+          else
+            false
+          )
+        @getUrl current_elem
+
+
+  # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
+  # if returning only one element for a window (simplest implementation), make sure it's in an array.
   getElements: (window) ->
     returnFirstSuccessful [
       ->
@@ -44,18 +68,16 @@ class WindowAccessor
         [ window.document() ]
     ]
 
-  getAnchor: (elements) ->
-    if elements.length > 1
-      elements.find((e) ->
-        if e and e.current
-          e.current
-        else
-          # FIXME why would elem end up being null?
-          debugger
-          false
-      )
-    else
-      elements[0]
+
+  # window-level accessors
+
+  getId: (window) ->
+    window.id()
+
+  getName: (window) ->
+    window.name()
+
+
 
   getFrontTabIndex: (window) ->
     try
@@ -68,23 +90,13 @@ class WindowAccessor
       # finder ends up here, among other things.
       return null
 
-
   # element-level accessors
-
-  getUrl: (element) ->
-    returnFirstSuccessful [
-      ->
-        element.url()
-      ->
-        # keynote
-        element.file().toString()
-    ]
 
   getElementName: (element) ->
     element.name()
 
 
-class XcodeStyle extends WindowAccessor
+class XcodeWindowAccessor extends WindowAccessor
 
   getUrl: (element) ->
     element.fileReference.fullPath()[0]
@@ -93,15 +105,19 @@ class XcodeStyle extends WindowAccessor
     element.fileReference.name()[0]
 
 
-class SafariStyle extends WindowAccessor
+class SafariWindowAccessor extends WindowAccessor
 
 
-
+# a quick-dirty signature-based factory.
 windowAccessor = (app) ->
   if app == 'com.apple.dt.Xcode'
-    new XcodeStyle()
+    new XcodeWindowAccessor()
   else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
-    new SafariStyle()
+    new SafariWindowAccessor()
+  # else if path = bundle_path_exists(app)
+  #   require(path)
+  esle if app == 'com.googlecode.iterm2'
+    new ItermWindowAccessor()
   else
     new WindowAccessor()
 
@@ -211,6 +227,9 @@ readWindows2 = (bundleId, filterWindowId) ->
   } ]
 
 
+##
+## { item_description }
+##
 
 returnFirstSuccessful = (fns) ->
   i = 0
@@ -229,3 +248,75 @@ returnFirstSuccessful = (fns) ->
   throw 'no calls were successful.'
   return
 
+
+##
+## { item_description }
+##
+
+bundle_path_exists = (bundle_id) ->
+  # working a 'requires' could solve this, but potentially make running quite slow.
+  # ...
+  
+
+
+#= iterm (dupe)
+
+
+
+class ItermWindowAccessor extends WindowAccessor
+
+  getAnchor = (element) ->
+    app = Application.currentApplication()
+    app.includeStandardAdditions = true
+
+    ttyProducer = element
+    ttyName = ttyProducer.tty()
+    # console.log(ttyName)
+    if ttyName
+      cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
+      # FIXME this command is very brittle.
+      cmdOut = runCmd(cmd).trim()
+      element.url = cmdOut
+      return element
+    else
+      throw 'e1: no ttyName for window'
+    return
+
+
+  getElements: (window) ->
+    returnFirstSuccessful [
+      ->
+        [ window.currentSession() ]
+      ->
+        [ window.target() ]
+      ->
+        window.tabs()
+      ->
+        [ window.document() ]
+    ]
+
+
+
+runCmd = (cmd) ->
+  NSUTF8StringEncoding = 4
+  pipe = $.NSPipe.pipe
+  file = pipe.fileHandleForReading
+  # NSFileHandle
+  task = $.NSTask.alloc.init
+  task.launchPath = '/bin/bash'
+  task.arguments = [
+    '-c'
+    cmd
+  ]
+  # console.log(cmd)
+  task.standardOutput = pipe
+  # if not specified, literally writes to file handles 1 and 2
+  task.launch
+  # Run the command `ps aux`
+  data = file.readDataToEndOfFile
+  # NSData
+  file.closeFile
+  # Call -[[NSString alloc] initWithData:encoding:]
+  data = $.NSString.alloc.initWithDataEncoding(data, NSUTF8StringEncoding)
+  ObjC.unwrap data
+  # Note we have to unwrap the NSString instance
