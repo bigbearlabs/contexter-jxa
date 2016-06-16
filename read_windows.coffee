@@ -27,6 +27,7 @@
 # We still need to find a good way to allow for an extension of this class in another file, without dragging in a complicated requiring mechanism.
 # A tempting option is to just concatenate the scripts files in the right order, and rely on documentation to 'expose' the extensible prototype.
 
+
 class WindowAccessor
 
   # most customisation-relevant
@@ -43,8 +44,9 @@ class WindowAccessor
 
   getAnchor: (elements) ->
     if elements.length == 1
-      @getUrl elements[0]
-
+      # @getUrl elements[0]  # WIP
+      elements[0]
+ 
     else
       # for multiple elements, return the one marked as current.
       if current_elem = elements.find((e) ->
@@ -53,7 +55,8 @@ class WindowAccessor
           else
             false
           )
-        @getUrl current_elem
+        # @getUrl current_elem  # WIP
+        current_elem
 
 
   # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
@@ -96,6 +99,10 @@ class WindowAccessor
     element.name()
 
 
+@WindowAccessor = WindowAccessor
+
+
+
 class XcodeWindowAccessor extends WindowAccessor
 
   getUrl: (element) ->
@@ -108,23 +115,91 @@ class XcodeWindowAccessor extends WindowAccessor
 class SafariWindowAccessor extends WindowAccessor
 
 
-# a quick-dirty signature-based factory.
-windowAccessor = (app) ->
-  if app == 'com.apple.dt.Xcode'
-    new XcodeWindowAccessor()
-  else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
-    new SafariWindowAccessor()
-  # else if path = bundle_path_exists(app)
-  #   require(path)
-  esle if app == 'com.googlecode.iterm2'
-    new ItermWindowAccessor()
-  else
-    new WindowAccessor()
+# PoC hacky subclassing of base accessor.
+@bundleSpecificAccessor = 
+  bundleId: 'com.googlecode.iterm2'
 
+  getUrl: (element) ->
+    try
+      ttyProducer = element
+      ttyName = ttyProducer.tty()
+      # console.log(ttyName)
+      if ttyName
+        cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
+        # FIXME this command is very brittle.
+        cmdOut = @runCmd(cmd).trim()
+
+        return cmdOut
+      else
+        throw 'e1: no ttyName for window'
+      return
+    catch e
+      debugger
+
+  getElements: (window) ->
+    # just the frontmost tab of an iterm window.
+    [ window.currentSession() ]
+
+
+  #= pvt
+
+  runCmd: (cmd) ->
+    NSUTF8StringEncoding = 4
+    pipe = $.NSPipe.pipe
+    file = pipe.fileHandleForReading
+    # NSFileHandle
+    task = $.NSTask.alloc.init
+    task.launchPath = '/bin/bash'
+    task.arguments = [
+      '-c'
+      cmd
+    ]
+    # console.log(cmd)
+    task.standardOutput = pipe
+    # if not specified, literally writes to file handles 1 and 2
+    task.launch
+    # Run the command `ps aux`
+    data = file.readDataToEndOfFile
+    # NSData
+    file.closeFile
+    # Call -[[NSString alloc] initWithData:encoding:]
+    data = $.NSString.alloc.initWithDataEncoding(data, NSUTF8StringEncoding)
+    ObjC.unwrap data
+    # Note we have to unwrap the NSString instance
+ 
 
 # END
 
 
+# a quick-dirty signature-based factory.
+windowAccessor = (app) ->
+  # if app == 'com.apple.dt.Xcode'
+  #   new XcodeWindowAccessor()
+  # else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
+  #   new SafariWindowAccessor()
+  # # else if path = bundle_path_exists(app)
+  # #   require(path)
+  # esle if app == 'com.googlecode.iterm2'
+  #   new ItermWindowAccessor()
+  # else
+  #   new WindowAccessor()
+
+
+  # IT2 merge the object provided by bundle-specific to the base accessor instance.
+  # if a global property `bundleSpecificAccessor` exists, its accessors will be merged into a WindowAccessor instance.
+  baseAccessor = new WindowAccessor()
+
+  if @bundleSpecificAccessor and @bundleSpecificAccessor.bundleId == app
+    Object.getOwnPropertyNames(@bundleSpecificAccessor).forEach (propertyName) ->
+      propertyVal = @bundleSpecificAccessor[propertyName]
+      baseAccessor[propertyName] = propertyVal
+      console.log "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
+    
+  return baseAccessor
+
+
+
+# ## JXA entry point -- will be invoked by `osascript`.
 @run = (argv) ->
   'use strict'
   app = argv[0]
@@ -132,7 +207,9 @@ windowAccessor = (app) ->
 
   # TEST VALUES uncomment lines and run without any params to test the script on a specific app.
   if argv.length == 0 or !app or app == ''
-    throw "no args"
+    # throw "no args"
+    # DEV
+    app = 'com.googlecode.iterm2'
 
   returnFirstSuccessful [
     ->
@@ -145,6 +222,8 @@ windowAccessor = (app) ->
 # read window info using the app's applescript dictionary.
 readWindows1 = (bundleId, filterWindowId) ->
   application = Application(bundleId)
+  # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
+
   accessor = windowAccessor(bundleId)
 
   JSON.stringify 
@@ -193,11 +272,9 @@ elementsFrom = (window, windowAccessor) ->
       window_id: windowAccessor.getId(window)
     ]
 
-
 # read using system events.
 # adapted from https://forum.keyboardmaestro.com/t/path-of-front-document-in-named-application/1468
 # NOTE this will scope windows to current space only!
-
 readWindows2 = (bundleId, filterWindowId) ->
   appName = Application(bundleId).name()
   app = Application('System Events').applicationProcesses[appName]
@@ -258,65 +335,5 @@ bundle_path_exists = (bundle_id) ->
   # ...
   
 
+# exports = WindowAccessor
 
-#= iterm (dupe)
-
-
-
-class ItermWindowAccessor extends WindowAccessor
-
-  getAnchor = (element) ->
-    app = Application.currentApplication()
-    app.includeStandardAdditions = true
-
-    ttyProducer = element
-    ttyName = ttyProducer.tty()
-    # console.log(ttyName)
-    if ttyName
-      cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
-      # FIXME this command is very brittle.
-      cmdOut = runCmd(cmd).trim()
-      element.url = cmdOut
-      return element
-    else
-      throw 'e1: no ttyName for window'
-    return
-
-
-  getElements: (window) ->
-    returnFirstSuccessful [
-      ->
-        [ window.currentSession() ]
-      ->
-        [ window.target() ]
-      ->
-        window.tabs()
-      ->
-        [ window.document() ]
-    ]
-
-
-
-runCmd = (cmd) ->
-  NSUTF8StringEncoding = 4
-  pipe = $.NSPipe.pipe
-  file = pipe.fileHandleForReading
-  # NSFileHandle
-  task = $.NSTask.alloc.init
-  task.launchPath = '/bin/bash'
-  task.arguments = [
-    '-c'
-    cmd
-  ]
-  # console.log(cmd)
-  task.standardOutput = pipe
-  # if not specified, literally writes to file handles 1 and 2
-  task.launch
-  # Run the command `ps aux`
-  data = file.readDataToEndOfFile
-  # NSData
-  file.closeFile
-  # Call -[[NSString alloc] initWithData:encoding:]
-  data = $.NSString.alloc.initWithDataEncoding(data, NSUTF8StringEncoding)
-  ObjC.unwrap data
-  # Note we have to unwrap the NSString instance
