@@ -99,8 +99,6 @@ class WindowAccessor
     element.name()
 
 
-@WindowAccessor = WindowAccessor
-
 
 
 class XcodeWindowAccessor extends WindowAccessor
@@ -115,88 +113,7 @@ class XcodeWindowAccessor extends WindowAccessor
 class SafariWindowAccessor extends WindowAccessor
 
 
-# PoC hacky subclassing of base accessor.
-@bundleSpecificAccessor = 
-  bundleId: 'com.googlecode.iterm2'
-
-  getUrl: (element) ->
-    try
-      ttyProducer = element
-      ttyName = ttyProducer.tty()
-      # console.log(ttyName)
-      if ttyName
-        cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
-        # FIXME this command is very brittle.
-        cmdOut = @runCmd(cmd).trim()
-
-        return cmdOut
-      else
-        throw 'e1: no ttyName for window'
-      return
-    catch e
-      debugger
-
-  getElements: (window) ->
-    # just the frontmost tab of an iterm window.
-    [ window.currentSession() ]
-
-
-  #= pvt
-
-  runCmd: (cmd) ->
-    NSUTF8StringEncoding = 4
-    pipe = $.NSPipe.pipe
-    file = pipe.fileHandleForReading
-    # NSFileHandle
-    task = $.NSTask.alloc.init
-    task.launchPath = '/bin/bash'
-    task.arguments = [
-      '-c'
-      cmd
-    ]
-    # console.log(cmd)
-    task.standardOutput = pipe
-    # if not specified, literally writes to file handles 1 and 2
-    task.launch
-    # Run the command `ps aux`
-    data = file.readDataToEndOfFile
-    # NSData
-    file.closeFile
-    # Call -[[NSString alloc] initWithData:encoding:]
-    data = $.NSString.alloc.initWithDataEncoding(data, NSUTF8StringEncoding)
-    ObjC.unwrap data
-    # Note we have to unwrap the NSString instance
- 
-
 # END
-
-
-# a quick-dirty signature-based factory.
-windowAccessor = (app) ->
-  # if app == 'com.apple.dt.Xcode'
-  #   new XcodeWindowAccessor()
-  # else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
-  #   new SafariWindowAccessor()
-  # # else if path = bundle_path_exists(app)
-  # #   require(path)
-  # esle if app == 'com.googlecode.iterm2'
-  #   new ItermWindowAccessor()
-  # else
-  #   new WindowAccessor()
-
-
-  # IT2 merge the object provided by bundle-specific to the base accessor instance.
-  # if a global property `bundleSpecificAccessor` exists, its accessors will be merged into a WindowAccessor instance.
-  baseAccessor = new WindowAccessor()
-
-  if @bundleSpecificAccessor and @bundleSpecificAccessor.bundleId == app
-    Object.getOwnPropertyNames(@bundleSpecificAccessor).forEach (propertyName) ->
-      propertyVal = @bundleSpecificAccessor[propertyName]
-      baseAccessor[propertyName] = propertyVal
-      console.log "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
-    
-  return baseAccessor
-
 
 
 # ## JXA entry point -- will be invoked by `osascript`.
@@ -207,24 +124,26 @@ windowAccessor = (app) ->
 
   # TEST VALUES uncomment lines and run without any params to test the script on a specific app.
   if argv.length == 0 or !app or app == ''
-    # throw "no args"
-    # DEV
-    app = 'com.googlecode.iterm2'
+    # app = 'com.googlecode.iterm2'  # DEV
+    throw "no args"
 
-  returnFirstSuccessful [
-    ->
-      readWindows1 app, filterWindowId
-    ->
-      readWindows2 app, filterWindowId
-  ]
+  accessor = windowAccessor(app)
+
+  if accessor.skipSystemEventsProbe
+    readWindows1(app, filterWindowId, accessor)
+  else
+    returnFirstSuccessful [
+      ->
+        readWindows1(app, filterWindowId, accessor)
+      ->
+        readWindows2(app, filterWindowId)
+    ]
 
 
 # read window info using the app's applescript dictionary.
-readWindows1 = (bundleId, filterWindowId) ->
+readWindows1 = (bundleId, filterWindowId, accessor) ->
   application = Application(bundleId)
   # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
-
-  accessor = windowAccessor(bundleId)
 
   JSON.stringify 
     windows: 
@@ -335,5 +254,31 @@ bundle_path_exists = (bundle_id) ->
   # ...
   
 
-# exports = WindowAccessor
+
+# a quick-dirty signature-based factory.
+windowAccessor = (app) ->
+  # if app == 'com.apple.dt.Xcode'
+  #   new XcodeWindowAccessor()
+  # else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
+  #   new SafariWindowAccessor()
+  # # else if path = bundle_path_exists(app)
+  # #   require(path)
+  # esle if app == 'com.googlecode.iterm2'
+  #   new ItermWindowAccessor()
+  # else
+  #   new WindowAccessor()
+
+
+  # IT2 merge the object provided by bundle-specific to the base accessor instance.
+  # if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
+  baseAccessor = new WindowAccessor()
+
+  if @windowAccessor and @windowAccessor.bundleId == app
+    Object.getOwnPropertyNames(@windowAccessor).forEach (propertyName) ->
+      propertyVal = @windowAccessor[propertyName]
+      baseAccessor[propertyName] = propertyVal
+      console.log "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
+    
+  return baseAccessor
+
 
