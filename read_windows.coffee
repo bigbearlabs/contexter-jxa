@@ -30,8 +30,9 @@
 
 class WindowAccessor
 
-  # most customisation-relevant
+  # ## most customisation-relevant
 
+  # return a url or posix path for a window's element.
   getUrl: (element) ->
     returnFirstSuccessful [
       ->
@@ -41,7 +42,8 @@ class WindowAccessor
         element.file().toString()
     ]
 
-
+  # return one of the elements of a window which url is bookmarked.
+  # the default implementation returns either the single element or the first element marked as 'current'.
   getAnchor: (elements) ->
     if elements.length == 1
       # @getUrl elements[0]  # WIP
@@ -49,25 +51,30 @@ class WindowAccessor
  
     else
       # for multiple elements, return the one marked as current.
-      if current_elem = elements.find((e) ->
+      if currentElem = elements.find((e) ->
           if e and e.current
             e.current
           else
             false
           )
-        # @getUrl current_elem  # WIP
-        current_elem
+        # @getUrl currentElem  # WIP
+        currentElem
+      else
+        throw "no element marked as current"
 
-
+  # return elements of a window.
   # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
   # if returning only one element for a window (simplest implementation), make sure it's in an array.
   getElements: (window) ->
     returnFirstSuccessful [
       ->
+        # finder-style script vocabulary
         [ window.target() ]
       ->
+        # browser-style script vocabulary
         window.tabs()
       ->
+        # vocabulary for doc windows
         [ window.document() ]
     ]
 
@@ -80,9 +87,8 @@ class WindowAccessor
   getName: (window) ->
     window.name()
 
-
-
-  getFrontTabIndex: (window) ->
+  # return index of the window's element which is frontmost.
+  getCurrentElementIndex: (window, elements) ->
     try
       if window.currentTab
         return window.currentTab().index()
@@ -93,24 +99,11 @@ class WindowAccessor
       # finder ends up here, among other things.
       return null
 
+
   # element-level accessors
 
   getElementName: (element) ->
     element.name()
-
-
-
-
-class XcodeWindowAccessor extends WindowAccessor
-
-  getUrl: (element) ->
-    element.fileReference.fullPath()[0]
-
-  getElementName: (element) ->
-    element.fileReference.name()[0]
-
-
-class SafariWindowAccessor extends WindowAccessor
 
 
 # END
@@ -126,6 +119,8 @@ class SafariWindowAccessor extends WindowAccessor
   if argv.length == 0 or !app or app == ''
     # app = 'com.googlecode.iterm2'  # DEV
     throw "no args"
+
+  console.log "probing app #{app}"
 
   accessor = windowAccessor(app)
 
@@ -145,8 +140,8 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
   application = Application(bundleId)
   # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
 
-  JSON.stringify 
-    windows: 
+  JSON.stringify
+    windows:
       # array of windows containing elements (window_id, url, name).
       application
         .windows()
@@ -165,7 +160,7 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
 
 elementsFrom = (window, windowAccessor) ->
   try
-    visibleTabIndex = windowAccessor.getFrontTabIndex(window)
+    visibleTabIndex = windowAccessor.getCurrentElementIndex(window)
     elements = windowAccessor.getElements(window)
 
     elements.map (element) ->
@@ -175,8 +170,8 @@ elementsFrom = (window, windowAccessor) ->
       {
         name: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
-        current: isCurrent
         tab_index: index
+        current: isCurrent
 
         window_id: windowAccessor.getId(window)
       }
@@ -184,7 +179,7 @@ elementsFrom = (window, windowAccessor) ->
   catch e
     debugger
 
-    [ 
+    [
       err: e.toString()
       name: windowAccessor.getName(window)
 
@@ -223,8 +218,9 @@ readWindows2 = (bundleId, filterWindowId) ->
   } ]
 
 
+
 ##
-## { item_description }
+## helper functions
 ##
 
 returnFirstSuccessful = (fns) ->
@@ -245,32 +241,9 @@ returnFirstSuccessful = (fns) ->
   return
 
 
-##
-## { item_description }
-##
-
-bundle_path_exists = (bundle_id) ->
-  # working a 'requires' could solve this, but potentially make running quite slow.
-  # ...
-  
-
-
-# a quick-dirty signature-based factory.
+# merge the object provided by bundle-specific to the base accessor instance.
+# if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
 windowAccessor = (app) ->
-  # if app == 'com.apple.dt.Xcode'
-  #   new XcodeWindowAccessor()
-  # else if ['com.google.Chrome.canary', 'com.apple.Safari'].includes(app)
-  #   new SafariWindowAccessor()
-  # # else if path = bundle_path_exists(app)
-  # #   require(path)
-  # esle if app == 'com.googlecode.iterm2'
-  #   new ItermWindowAccessor()
-  # else
-  #   new WindowAccessor()
-
-
-  # IT2 merge the object provided by bundle-specific to the base accessor instance.
-  # if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
   baseAccessor = new WindowAccessor()
 
   if @windowAccessor and @windowAccessor.bundleId == app

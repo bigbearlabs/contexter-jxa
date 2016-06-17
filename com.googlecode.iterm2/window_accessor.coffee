@@ -1,28 +1,28 @@
 # ---
-# doit: 
-#   cmd: | 
+# doit:
+#   cmd: |
 #     coffee -cp #{file} | osascript -l JavaScript - com.googlecode.iTerm2
 #   args:
-#       
+#
 # test:
 # ---
 
-# PoC hacky subclassing of base accessor.
-@windowAccessor = 
+@windowAccessor =
 
   bundleId: 'com.googlecode.iterm2'
 
   skipSystemEventsProbe: true
 
 
+  # return path of the current session. this is sluggish!
   getUrl: (element) ->
     try
-      ttyProducer = element
-      ttyName = ttyProducer.tty()
+      ttyName = element.tty()
       # console.log(ttyName)
       if ttyName
-        cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
+        # run a command that finds the working directory of a tty.
         # FIXME this command is very brittle.
+        cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
         cmdOut = @runCmd(cmd).trim()
 
         return cmdOut
@@ -32,8 +32,8 @@
     catch e
       debugger
 
+  # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
   getElements: (window) ->
-    # just the frontmost tab of an iterm window.
     [ window.currentSession() ]
 
 
