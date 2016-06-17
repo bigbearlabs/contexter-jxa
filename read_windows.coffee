@@ -140,7 +140,7 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
   application = Application(bundleId)
   # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
 
-  JSON.stringify
+  toString
     windows:
       # array of windows containing elements (window_id, url, name).
       application
@@ -199,20 +199,20 @@ readWindows2 = (bundleId, filterWindowId) ->
   try
     lstWins = app.windows()
   catch f
-    return JSON.stringify(err: 'e1: No open documents found in ' + appName)
+    return toString(err: 'e1: No open documents found in ' + appName)
   if lstWins
     # DOES THE WINDOW CONTAIN A SAVED DOCUMENT ?
     try
       strURL = lstWins[0].attributes['AXDocument'].value()
     catch g
-      return JSON.stringify(err: 'e2: No open documents found in ' + appName)
+      return toString(err: 'e2: No open documents found in ' + appName)
   windows = lstWins.map((w0) ->
     {
       url: w0.attributes['AXDocument'].value()
       name: w0.attributes['AXTitle'].value()
     }
   )
-  JSON.stringify windows: [ {
+  toString windows: [ {
     elements: windows
     anchor: windows[0]
   } ]
@@ -239,6 +239,10 @@ returnFirstSuccessful = (fns) ->
   debugger
   throw 'no calls were successful.'
   return
+
+
+toString = (obj) ->
+  JSON.stringify obj, null, '  '
 
 
 # merge the object provided by bundle-specific to the base accessor instance.
