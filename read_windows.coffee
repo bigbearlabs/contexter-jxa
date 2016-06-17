@@ -1,10 +1,10 @@
 # ---
 # doit: 
 #   cmd: | 
-#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id} | jq
+#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id}
 #   args:
 #     bundle_id:
-#       - com.torusknot.SourceTreeNotMAS
+#       - com.apple.Safari
 #       
 # test:
 #   args:
@@ -46,7 +46,6 @@ class WindowAccessor
   # the default implementation returns either the single element or the first element marked as 'current'.
   getAnchor: (elements) ->
     if elements.length == 1
-      # @getUrl elements[0]  # WIP
       elements[0]
  
     else
@@ -57,7 +56,6 @@ class WindowAccessor
           else
             false
           )
-        # @getUrl currentElem  # WIP
         currentElem
       else
         throw "no element marked as current"
@@ -79,7 +77,7 @@ class WindowAccessor
     ]
 
 
-  # window-level accessors
+  # ## window-level accessors
 
   getId: (window) ->
     window.id()
@@ -100,10 +98,19 @@ class WindowAccessor
       return null
 
 
-  # element-level accessors
+  # ## element-level accessors
 
   getElementName: (element) ->
     element.name()
+
+
+  # ## app-level accessors
+
+  getWindows: (application) ->
+    application.windows()
+
+    # DEV uncomment below to reduce probe volume to the frontmost window of the app.
+    # [ application.windows()[0] ]
 
 
 # END
@@ -120,7 +127,7 @@ class WindowAccessor
     # app = 'com.googlecode.iterm2'  # DEV
     throw "no args"
 
-  console.log "probing app #{app}"
+  trace "probing app #{app}"
 
   accessor = windowAccessor(app)
 
@@ -129,7 +136,11 @@ class WindowAccessor
   else
     returnFirstSuccessful [
       ->
-        readWindows1(app, filterWindowId, accessor)
+        try
+          readWindows1(app, filterWindowId, accessor)
+        catch e
+          trace e.stack
+          throw e
       ->
         readWindows2(app, filterWindowId)
     ]
@@ -143,15 +154,18 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
   toString
     windows:
       # array of windows containing elements (window_id, url, name).
-      application
-        .windows()
+      accessor
+        .getWindows(application)
+
         .map (window) ->
           elementsFrom window, accessor
+
         .filter (window) ->
           if filterWindowId
             window.elements[0].window_id == filterWindowId
           else
             true
+
         .map (elements) ->
           return {
             elements: elements
@@ -163,7 +177,7 @@ elementsFrom = (window, windowAccessor) ->
     visibleTabIndex = windowAccessor.getCurrentElementIndex(window)
     elements = windowAccessor.getElements(window)
 
-    elements.map (element) ->
+    return elements.map (element) ->
       index = elements.indexOf(element)
       isCurrent = if visibleTabIndex then visibleTabIndex - 1 == index else null
       
@@ -212,16 +226,22 @@ readWindows2 = (bundleId, filterWindowId) ->
       name: w0.attributes['AXTitle'].value()
     }
   )
-  toString windows: [ {
-    elements: windows
-    anchor: windows[0]
-  } ]
+  toString 
+    windows: [ {
+      elements: windows
+      anchor: windows[0]
+    } ]
 
 
 
 ##
 ## helper functions
 ##
+
+trace = (out) ->
+  # DEV uncomment to see logging statements.
+  # console.log out
+
 
 returnFirstSuccessful = (fns) ->
   i = 0
@@ -254,7 +274,7 @@ windowAccessor = (app) ->
     Object.getOwnPropertyNames(@windowAccessor).forEach (propertyName) ->
       propertyVal = @windowAccessor[propertyName]
       baseAccessor[propertyName] = propertyVal
-      console.log "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
+      trace "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
     
   return baseAccessor
 
