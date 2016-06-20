@@ -25,7 +25,10 @@
         cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
         cmdOut = @runCmd(cmd).trim()
 
-        return cmdOut
+        if cmdOut.length > 1
+          return "file://#{cmdOut}"
+        else
+          return cmdOut
       else
         throw 'e1: no ttyName for window'
       return
