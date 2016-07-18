@@ -22,7 +22,12 @@
       if ttyName
         # run a command that finds the working directory of a tty.
         # FIXME this command is very brittle.
-        cmd = '/usr/sbin/lsof -a -p `/usr/sbin/lsof -a -u $USER -d 0 -n | tail -n +2 | awk \'{if($NF=="' + ttyName + '"){print $2}}\' | head -1` -d cwd -n | tail -n +2 | awk \'{print $NF}\''
+        cmd = """
+          short_tty=`basename #{ttyName}`
+          tty_ps=`ps -f | grep $short_tty | head -n 1 | awk '{print $2}'`
+          /usr/sbin/lsof -a -p $tty_ps -d cwd -n | tail -n +2 | awk '{print $NF}'
+        """
+
         cmdOut = @runCmd(cmd).trim()
 
         if cmdOut.length > 1
