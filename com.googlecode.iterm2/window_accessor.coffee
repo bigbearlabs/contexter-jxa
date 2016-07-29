@@ -1,7 +1,7 @@
 # ---
 # doit:
 #   cmd: |
-#     coffee -cp #{file} | osascript -l JavaScript - com.googlecode.iTerm2
+#     rake && osascript -l JavaScript - ../build/com.googlecode.iterm2/read_window.js com.googlecode.iterm2
 #   args:
 #
 # test:
@@ -24,8 +24,8 @@
         # FIXME this command is very brittle.
         cmd = """
           short_tty=`basename #{ttyName}`
-          tty_ps=`ps -f | grep $short_tty | head -n 1 | awk '{print $2}'`
-          /usr/sbin/lsof -a -p $tty_ps -d cwd -n | tail -n +2 | awk '{print $NF}'
+          tty_pid=`ps -f -o pid,etime,command | grep $short_tty | sort -k 9 | head -n 1 | awk '{print $2}'`
+          /usr/sbin/lsof -a -p $tty_pid -d cwd -n | tail -n +2 | awk '{print $NF}'
         """
 
         cmdOut = @runCmd(cmd).trim()
@@ -40,8 +40,8 @@
     catch e
       debugger
 
-  # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
   getElements: (window) ->
+    # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
     [ window.currentSession() ]
 
 
