@@ -30,7 +30,7 @@
 
         cmdOut = @runCmd(cmd).trim()
 
-        if cmdOut.length > 1
+        if cmdOut.length > 0
           return "file://#{cmdOut}"
         else
           return cmdOut
