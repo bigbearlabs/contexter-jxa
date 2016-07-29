@@ -45,7 +45,7 @@
     [ window.currentSession() ]
 
 
-  #= pvt
+  #= pvt, util
 
   runCmd: (cmd) ->
     NSUTF8StringEncoding = 4
