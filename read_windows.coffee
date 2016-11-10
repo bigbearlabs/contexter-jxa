@@ -87,16 +87,15 @@ class WindowAccessor
 
   # return index of the window's element which is frontmost.
   getCurrentElementIndex: (window, elements) ->
-    try
-      if window.currentTab
+    returnFirstSuccessful [
+      ->
         return window.currentTab().index()
-      else if window.activeTab
+      ->
         # for chrome, use activeTab instead.
-        return window.activeTab().index()
-    catch e
-      # finder ends up here, among other things.
-      return null
-
+        return window.activeTabIndex()  # chrome Version 56.0.2913.3 canary (64-bit)
+      ->
+        null
+    ]
 
   # ## element-level accessors
 
