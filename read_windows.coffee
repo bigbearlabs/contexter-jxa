@@ -226,10 +226,9 @@ readWindows2 = (bundleId, filterWindowId) ->
     }
   )
   toString 
-    windows: [ {
-      elements: windows
-      anchor: windows[0]
-    } ]
+    windows: windows.map (window) ->
+      elements: [ window ]
+      anchor: window
 
 
 
