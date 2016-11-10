@@ -241,7 +241,7 @@ trace = (out) ->
   # console.log out
 
 
-returnFirstSuccessful = (fns) ->
+@returnFirstSuccessful = returnFirstSuccessful = (fns) ->
   i = 0
   while i < fns.length
     fn = fns[i]
