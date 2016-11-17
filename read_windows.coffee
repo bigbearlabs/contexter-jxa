@@ -111,6 +111,7 @@ class WindowAccessor
     # DEV uncomment below to reduce probe volume to the frontmost window of the app.
     # [ application.windows()[0] ]
 
+      
 
 # END
 
@@ -118,30 +119,30 @@ class WindowAccessor
 # ## JXA entry point -- will be invoked by `osascript`.
 @run = (argv) ->
   'use strict'
-  app = argv[0]
+  bundleId = argv[0]
   filterWindowId = argv[1]
 
-  # TEST VALUES uncomment lines and run without any params to test the script on a specific app.
-  if argv.length == 0 or !app or app == ''
-    # app = 'com.googlecode.iterm2'  # DEV
+  # TEST VALUES uncomment lines and run without any params to test the script on a specific bundleId.
+  if argv.length == 0 or !bundleId or bundleId == ''
+    # bundleId = 'com.googlecode.iterm2'  # DEV
     throw "no args"
 
-  trace "probing app #{app}"
+  trace "probing app #{bundleId}"
 
-  accessor = windowAccessor(app)
+  accessor = windowAccessor(bundleId)
 
   if accessor.skipSystemEventsProbe
-    readWindows1(app, filterWindowId, accessor)
+    readWindows1(bundleId, filterWindowId, accessor)
   else
     returnFirstSuccessful [
       ->
         try
-          readWindows1(app, filterWindowId, accessor)
+          readWindows1(bundleId, filterWindowId, accessor)
         catch e
           trace e.stack
           throw e
       ->
-        readWindows2(app, filterWindowId)
+        readWindows2(bundleId, filterWindowId)
     ]
 
 
@@ -263,7 +264,7 @@ toString = (obj) ->
   JSON.stringify obj, null, '  '
 
 
-# merge the object provided by bundle-specific to the base accessor instance.
+# merge the object provided by bundle-specific script to the base accessor instance.
 # if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
 windowAccessor = (app) ->
   baseAccessor = new WindowAccessor()
