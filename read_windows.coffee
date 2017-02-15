@@ -142,7 +142,7 @@ class WindowAccessor
           trace e.stack
           throw e
       ->
-        readWindows2(bundleId, filterWindowId)
+        readWindowsWithSystemEvents(bundleId, filterWindowId)
     ]
 
 
@@ -203,7 +203,7 @@ elementsFrom = (window, windowAccessor) ->
 # read using system events.
 # adapted from https://forum.keyboardmaestro.com/t/path-of-front-document-in-named-application/1468
 # NOTE this will scope windows to current space only!
-readWindows2 = (bundleId, filterWindowId) ->
+readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
   appName = Application(bundleId).name()
   app = Application('System Events').applicationProcesses[appName]
 
@@ -223,7 +223,9 @@ readWindows2 = (bundleId, filterWindowId) ->
   windows = lstWins.map((w0) ->
     {
       url: w0.attributes['AXDocument'].value()
-      name: w0.attributes['AXTitle'].value()
+      name: w0.attributes['AXTitle'].value(),
+      frame: "{{" + w0.position() + "}, {" + w0.size() + "}}",
+      window_id: w0.attributes['AXIdentifier'].value()
     }
   )
   toString 
