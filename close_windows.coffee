@@ -1,8 +1,19 @@
-# close windows of an app.
+### close windows of an app. ###
+
+
+shouldDebug = false
 
 @run = (argv) ->
   bundleId = argv[0]
   windowIds = JSON.parse(argv[1])
+
+  # first try parsing into a number.
+  windowIds = windowIds.map (e) ->
+    i = parseInt(e)
+    if isNaN(i)
+      e
+    else 
+      i
 
   try
     app = Application(bundleId)
@@ -10,6 +21,8 @@
       closeWindow(app, windowId)
   catch e
     console.log { msg: "error closing window ", err: e }
+    if shouldDebug
+      debugger
 
     app = Application('System Events').applicationProcesses[app.name()]
     windowIds.forEach (windowId) ->
@@ -27,7 +40,7 @@ closeWindow = (app, windowId) ->
 closeWindowWithSystemEvents = (app, windowId) ->
   window = app.windows().find (w) ->
     w.attributes["AXIdentifier"].value() == windowId
-  if window == null 
+  if !window  
     return JSON.stringify({
       err: "e3: window not found",
       id: windowId
