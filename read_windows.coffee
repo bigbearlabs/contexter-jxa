@@ -221,11 +221,16 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
     catch g
       return toString(err: 'e2: No open documents found in ' + appName)
   windows = lstWins.map((w0) ->
+    window_id = 
+      if w0.attributes.name().indexOf('AXIdentifier') > -1 
+        w0.attributes['AXIdentifier'].value()
+      else
+        ""
     {
       url: w0.attributes['AXDocument'].value()
       name: w0.attributes['AXTitle'].value(),
       frame: "{{" + w0.position() + "}, {" + w0.size() + "}}",
-      window_id: w0.attributes['AXIdentifier'].value()
+      window_id: window_id
     }
   )
   toString 
