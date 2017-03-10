@@ -25,15 +25,12 @@
         cmd = """
           short_tty=`basename #{ttyName}`
           tty_pid=`ps -f -o pid,etime,command | grep $short_tty | sort -k 9 | head -n 1 | awk '{print $2}'`
-          /usr/sbin/lsof -a -p $tty_pid -d cwd -n | tail -n +2 | awk '{print $NF}'
+          /usr/sbin/lsof -a -p $tty_pid -d cwd -n -F n | grep '^n' | sed 's/^n//'
         """
 
         cmdOut = @runCmd(cmd).trim()
 
-        if cmdOut.length > 0
-          return "file://#{cmdOut}"
-        else
-          return cmdOut
+        return cmdOut
       else
         throw 'e1: no ttyName for window'
       return
