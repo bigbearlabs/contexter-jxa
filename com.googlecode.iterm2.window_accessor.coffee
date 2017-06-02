@@ -32,15 +32,20 @@
 
         return cmdOut
       else
-        throw 'e1: no ttyName for window'
+        throw 'cx-jxa: no ttyName for window'
       return
     catch e
       debugger
 
   getElements: (window) ->
     # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
-    [ window.currentSession() ]
+    window
+      .tabs()
+      .map (t) -> t.currentSession()
 
+  getCurrentElementIndex: (window, elements) ->
+    currentId = window.currentSession().id()
+    return elements.map((e)-> e.id()).indexOf(currentId)
 
   #= pvt, util
 
