@@ -58,7 +58,10 @@ class WindowAccessor
           )
         currentElem
       else
-        throw "no element marked as current"
+        throw JSON.stringify {
+          msg: "cx-jxa: no element marked as current"
+          data: elements
+        }
 
   # return elements of a window.
   # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
@@ -88,11 +91,11 @@ class WindowAccessor
   # return index of the window's element which is frontmost.
   getCurrentElementIndex: (window, elements) ->
     returnFirstSuccessful [
-      ->
-        return window.currentTab().index()
+      -> 
+        window.currentTab().index() - 1
       ->
         # for chrome, use activeTab instead.
-        return window.activeTabIndex()  # chrome Version 56.0.2913.3 canary (64-bit)
+        window.activeTabIndex() - 1 # chrome Version 56.0.2913.3 canary (64-bit)
       ->
         null
     ]
@@ -125,7 +128,7 @@ class WindowAccessor
   # TEST VALUES uncomment lines and run without any params to test the script on a specific bundleId.
   if argv.length == 0 or !bundleId or bundleId == ''
     # bundleId = 'com.googlecode.iterm2'  # DEV
-    throw "no args"
+    throw "cx-jxa: no args"
 
   trace "probing app #{bundleId}"
 
@@ -174,12 +177,16 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
 
 elementsFrom = (window, windowAccessor) ->
   try
-    visibleTabIndex = windowAccessor.getCurrentElementIndex(window)
     elements = windowAccessor.getElements(window)
+    currentTabIndex = windowAccessor.getCurrentElementIndex(window, elements)
 
     return elements.map (element) ->
       index = elements.indexOf(element)
-      isCurrent = if visibleTabIndex then visibleTabIndex - 1 == index else null
+      isCurrent = 
+        if currentTabIndex != null 
+          currentTabIndex == index
+        else
+          null
       
       {
         name: windowAccessor.getElementName(element)
@@ -263,8 +270,7 @@ trace = (out) ->
       # this function threw -- move on to the next one.
     i++
   debugger
-  throw 'no calls were successful.'
-  return
+  throw 'cx-jxa: no calls were successful.'
 
 
 toString = (obj) ->
