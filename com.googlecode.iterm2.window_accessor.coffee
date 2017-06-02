@@ -14,7 +14,7 @@
   skipSystemEventsProbe: true
 
 
-  # return path of the current session. this is sluggish!
+  # return path of the current session. this is sluggish on old machines!
   getUrl: (element) ->
     try
       ttyName = element.tty()
@@ -33,19 +33,27 @@
         return cmdOut
       else
         throw 'cx-jxa: no ttyName for window'
-      return
+
     catch e
       debugger
+
 
   getElements: (window) ->
     # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
     window
       .tabs()
       .map (t) -> t.currentSession()
+      .map (s) -> 
+        id: s.id,
+        tabId: s.id(),
+        name: s.name,
+        tty: s.tty
+
 
   getCurrentElementIndex: (window, elements) ->
     currentId = window.currentSession().id()
     return elements.map((e)-> e.id()).indexOf(currentId)
+
 
   #= pvt, util
 

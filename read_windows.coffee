@@ -58,7 +58,7 @@ class WindowAccessor
           )
         currentElem
       else
-        throw JSON.stringify {
+        throw toString {
           msg: "cx-jxa: no element marked as current"
           data: elements
         }
@@ -191,6 +191,7 @@ elementsFrom = (window, windowAccessor) ->
       {
         name: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
+        tab_id: element.tabId
         tab_index: index
         current: isCurrent
 
