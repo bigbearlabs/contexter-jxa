@@ -40,6 +40,9 @@ class WindowAccessor
       ->
         # keynote
         element.file().toString()
+      ->
+        # preview
+        element.path()
     ]
 
   # return one of the elements of a window which url is bookmarked.
