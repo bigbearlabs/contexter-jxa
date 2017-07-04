@@ -190,13 +190,15 @@ elementsFrom = (window, windowAccessor) ->
           currentTabIndex == index
         else
           null
-      
+      bounds = window.bounds()
+
       {
         name: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
         tab_id: element.tabId
         tab_index: index
         current: isCurrent
+        frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
         window_id: windowAccessor.getId(window)
       }
