@@ -217,9 +217,11 @@ elementsFrom = (window, windowAccessor) ->
 # adapted from https://forum.keyboardmaestro.com/t/path-of-front-document-in-named-application/1468
 # NOTE this will scope windows to current space only!
 readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
-  appName = Application(bundleId).name()
-  app = Application('System Events').applicationProcesses[appName]
+  matches = Application('System Events').applicationProcesses.whose({bundleIdentifier: bundleId})
+  if matches.length == 0
+    return toString(err: 'e3: System Events did not return app for ' + bundleId)
 
+  app = matches[matches.length-1]
   
   # IS THERE AN OPEN WINDOW IN AN APPLICATION OF THIS NAME ?
   lstWins = null
