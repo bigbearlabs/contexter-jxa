@@ -200,7 +200,7 @@ elementsFrom = (window, windowAccessor) ->
         current: isCurrent
         frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
-        window_id: windowAccessor.getId(window)
+        window_id: String(windowAccessor.getId(window))
       }
 
   catch e
@@ -210,7 +210,7 @@ elementsFrom = (window, windowAccessor) ->
       err: e.toString()
       name: windowAccessor.getName(window)
 
-      window_id: windowAccessor.getId(window)
+      window_id: String(windowAccessor.getId(window))
     ]
 
 # read using system events.
@@ -245,7 +245,7 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
       url: w0.attributes['AXDocument'].value()
       name: w0.attributes['AXTitle'].value(),
       frame: "{{" + w0.position() + "}, {" + w0.size() + "}}",
-      window_id: window_id
+      window_id: String(window_id)
     }
   )
   toString 
