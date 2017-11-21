@@ -15,3 +15,9 @@
     	-> element.name()  # # xcode 8
 	    -> element.fileReference.name()[0]  # # xcode 7.*
 	]
+  getWindows: (application) =>
+    application.windows()
+      .filter (w) =>
+        # since xcode9, we can end up with a bunch of hidden windows that can cause a lot of errors.
+        w.id != -1
+
