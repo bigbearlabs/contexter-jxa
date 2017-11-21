@@ -24,7 +24,7 @@ newWindow = (resourceUrls) ->
   # TODO assert valid subl bin in path.
 
   params = [ "-n", paths(resourceUrls)... ]
-  cmd = "subl"
+  cmd = "/usr/local/bin/subl"  # HARDCODED
 
   result = exec(cmd, params)
 
