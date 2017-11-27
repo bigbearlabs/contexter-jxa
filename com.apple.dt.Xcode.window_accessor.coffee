@@ -19,5 +19,5 @@
     application.windows()
       .filter (w) =>
         # since xcode9, we can end up with a bunch of hidden windows that can cause a lot of errors.
-        w.id != -1
+        (w.id() || "-1").toString() != "-1"
 
