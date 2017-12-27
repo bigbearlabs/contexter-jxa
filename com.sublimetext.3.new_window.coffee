@@ -28,21 +28,21 @@ newWindow = (resourceUrls) ->
 
   result = exec(cmd, params)
 
-  return 
+  return \
     cmd: cmd
     params: params
     result: result
   
 
 paths = (urlStrings) ->
-  urlStrings.map (s) -> 
+  urlStrings.map (s) ->
     s2 = s.replace(/^file:\/\//, "")  # file:///xyz -> /xyz
       .replace("\"", "\\\"")  # quote '"'
     return "\"#{s2}\""  # "/xyz"
 
 exec = (cmd, params) ->
   pathEnvVar = $.getenv('PATH')
-  $.setenv("PATH", pathEnvVar, 1);  
+  $.setenv("PATH", pathEnvVar, 1)
   status = $.system([cmd, params...].join(" "))
   # $.exit(status >> 8)
   if status != 0
