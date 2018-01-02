@@ -1,14 +1,14 @@
 # ---
 # doit: 
 #   cmd: | 
-#     coffee -cp #{file} | osascript -l JavaScript - #{bundle_id}
+#     coffee -cp #{file} | osascript -l JavaScript - #{bundleId}
 #   args:
-#     bundle_id:
+#     bundleId:
 #       - com.apple.Safari
 #       
 # test:
 #   args:
-#     bundle_id:
+#     bundleId:
 #       - com.apple.Safari
 #       - com.apple.finder
 #       - com.google.Chrome.canary
@@ -159,7 +159,7 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
 
   toString
     windows:
-      # array of windows containing elements (window_id, url, name).
+      # array of windows containing elements (windowId, url, name).
       accessor
         .getWindows(application)
 
@@ -168,7 +168,7 @@ readWindows1 = (bundleId, filterWindowId, accessor) ->
 
         .filter (window) ->
           if filterWindowId
-            window.elements[0].window_id == filterWindowId
+            window.elements[0].windowId == filterWindowId
           else
             true
 
@@ -195,12 +195,12 @@ elementsFrom = (window, windowAccessor) ->
       {
         name: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
-        tab_id: element.tabId
+        tabId: element.tabId
         tab_index: index
         current: isCurrent
         frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
-        window_id: String(windowAccessor.getId(window))
+        windowId: String(windowAccessor.getId(window))
       }
 
   catch e
@@ -210,7 +210,7 @@ elementsFrom = (window, windowAccessor) ->
       err: e.toString()
       name: windowAccessor.getName(window)
 
-      window_id: String(windowAccessor.getId(window))
+      windowId: String(windowAccessor.getId(window))
     ]
 
 # read using system events.
@@ -236,7 +236,7 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
     catch g
       return toString(err: 'e2: No open documents found in ' + appName)
   windows = lstWins.map((w0) ->
-    window_id = 
+    windowId = 
       if w0.attributes.name().indexOf('AXIdentifier') > -1 
         w0.attributes['AXIdentifier'].value()
       else
@@ -245,7 +245,7 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
       url: w0.attributes['AXDocument'].value()
       name: w0.attributes['AXTitle'].value(),
       frame: "{{" + w0.position() + "}, {" + w0.size() + "}}",
-      window_id: String(window_id)
+      windowId: String(windowId)
     }
   )
   toString 
