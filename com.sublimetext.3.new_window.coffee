@@ -8,6 +8,8 @@
 # ---
 
 
+# FIXME make input arguments more standard-friendly - to begin with, de-json the input.
+
 ObjC.import('stdlib')
 
 
@@ -20,10 +22,10 @@ app.includeStandardAdditions = true
   return JSON.stringify(newWindow(resourceUrls))
 
 
-newWindow = (resourceUrls) ->
+newWindow = (resourceUrlsString) ->
   # TODO assert valid subl bin in path.
 
-  params = [ "-n", paths(resourceUrls)... ]
+  params = [ "-n", quotedPaths(resourceUrlsString)... ]
   cmd = "/usr/local/bin/subl"  # HARDCODED
 
   result = exec(cmd, params)
@@ -32,9 +34,11 @@ newWindow = (resourceUrls) ->
     cmd: cmd
     params: params
     result: result
+    new_window:
+      id: "FIX_STUB!!!"
   
 
-paths = (urlStrings) ->
+quotedPaths = (urlStrings) ->
   urlStrings.map (s) ->
     s2 = s.replace(/^file:\/\//, "")  # file:///xyz -> /xyz
       .replace("\"", "\\\"")  # quote '"'
