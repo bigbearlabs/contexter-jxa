@@ -186,7 +186,7 @@ elementsFrom = (window, windowAccessor) ->
     return elements.map (element) ->
       index = elements.indexOf(element)
       isCurrent = 
-        if currentTabIndex != null 
+        if currentTabIndex
           currentTabIndex == index
         else
           null

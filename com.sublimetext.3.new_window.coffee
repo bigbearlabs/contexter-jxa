@@ -1,7 +1,7 @@
 # ---
 # doit:
 #   cmd: |
-#     coffee -cp #{file} | osascript -l JavaScript - '["file:///usr/local/bin", "file:///etc/"]'
+#     coffee -cp #{file} | osascript -l JavaScript - 'resourceUrls=["file:///usr/local/bin", "file:///etc/"]'
 #   args:
 #
 # test:
@@ -18,7 +18,8 @@ app = Application(bundleId)
 app.includeStandardAdditions = true
 
 @run = (argv) ->
-  resourceUrls = JSON.parse(argv[0])
+  args = argsHash(argv)
+  resourceUrls = JSON.parse(args.resourceUrls)
   return JSON.stringify(newWindow(resourceUrls))
 
 
@@ -52,3 +53,21 @@ exec = (cmd, params) ->
   if status != 0
     throw status
   "exec finished. TODO parse stdout,stderr"
+
+
+
+## UTIL
+
+# return a dictionary of args conventionally passed as an array of strings, 
+# based on common sense expectations.
+argsHash = (argv) ->
+  # for each bit, split to <key>=<value>, to return a k-v pair.
+  # reduce it down to a pojo and return.
+
+  argsObj = argv.reduce (acc, token) ->
+    [k, v] = token.split("=")
+    acc[k] = v
+    acc
+  , {}
+
+  return argsObj

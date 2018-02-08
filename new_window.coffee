@@ -1,21 +1,57 @@
+# ---
+# doit:
+#   cmd: |
+#     coffee -cp #{file} | osascript -l JavaScript - 'bundleId=com.google.Chrome.canary url=http://google.com'
+#   args:
+#
+# test:
+# ---
+
 @run = (argv) =>
-  @bundleId = argv[0]
-  resourceUrls = JSON.parse(argv[1])
-  JSON.stringify(
+  ###
+  # @bundleId = argv[0]
+  # resourceUrls = JSON.parse(argv[1])
+
+  # argv = ["bundleId=com.google.Chrome.canary", "url=http://google.com"]
+  ###
+
+  args = argsHash(argv)
+
+  @bundleId = args.bundleId
+  if !@bundleId
+    err = "e5: missing or bad argument: bundleId"
+
+  resourceUrls = 
+    if args.url
+      [args.url]
+    else if args.resourceUrls
+      JSON.parse(args.resourceUrls)
+
+  if !resourceUrls
+    err = "e6: missing or bad argument: url|resourceUrls"
+          
+  @directive = directives[@bundleId]
+  if !@directive
+    err = "e4: no new_window directive for #{bundleId}"
+
+  if err
+    return {
+      err: err
+    }
+
+
+  return JSON.stringify(
     newWindow(resourceUrls)
   )
 
 
+newWindow = (resourceUrls) =>
 
-newWindow = (resourceUrls) ->
-  directive = directives[bundleId] ||
-    throw "no directive for #{bundleId}"
-
-  window = directive.windowClass().make()
+  window = @directive.windowClass().make()
   # delay(0.1)
 
   # window = app.windows[0]
-  return directive.loadResources(window, resourceUrls)
+  return @directive.loadResources(window, resourceUrls)
 
 # newWindow = (resourceUrls) ->
 #   window = windowClass().make()
@@ -24,14 +60,14 @@ newWindow = (resourceUrls) ->
 #   # window = app.windows[0]
 #   return loadResources(window, resourceUrls)
 
-    
+
 # for windows with tabs
 # e.g. safari, chrome
 loadResourcesInTabs = (window, resourceUrls) ->
   for resourceUrl, i in resourceUrls
     if i != 0
       window.tabs.push(new app().Tab())
-    window.tabs[window.tabs.length-1].url = resourceUrl
+      window.tabs[window.tabs.length-1].url = resourceUrl
 
   return {
     new_window:
@@ -59,3 +95,20 @@ directives = {
     windowClass: -> app().Window()
     loadResources: loadResourcesInTabs
 }
+
+
+## UTIL
+
+# return a dictionary of args conventionally passed as an array of strings, 
+# based on common sense expectations.
+argsHash = (argv) ->
+  # for each bit, split to <key>=<value>, to return a k-v pair.
+  # reduce it down to a pojo and return.
+
+  argsObj = argv.reduce (acc, token) ->
+    [k, v] = token.split("=")
+    acc[k] = v
+    acc
+  , {}
+
+  return argsObj

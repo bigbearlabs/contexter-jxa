@@ -13,7 +13,7 @@ desc "coffee"
 task :coffee do
   # compile.
   Dir.glob "#{src_path}/**/*.coffee" do |path|
-    cmd = "coffee -o #{build_path}/#{File.dirname path} -c #{path}"
+    cmd = "coffee -m -o #{build_path}/#{File.dirname path} -c #{path}"
     sh cmd
   end
 end
@@ -28,10 +28,12 @@ task :concat do
   puts "# concatenate the base and extension scripts."
   Dir.glob "#{extensions_path}/*.window_accessor.js" do |path|
     # cat_base = File.dirname path
-    cat_base = path.gsub ".window_accessor.js", ""
+    output_file_prefix = path.gsub ".window_accessor.js", ""
+    output_file = "#{output_file}.read_windows.js"
+
     cmd = %(        
-      echo "// Contexter probe script, concatenated by Rakefile at #{Time.new}\n" > "#{cat_base}.read_windows.js"
-      cat "#{path}" "#{base_script}" >> "#{cat_base}.read_windows.js" &
+      echo "// Contexter probe script, concatenated by Rakefile at #{Time.new}\n" > "#{output_file}"
+      cat "#{path}" "#{base_script}" >> "#{output_file}" &
     )
 
     puts "## cmd: #{cmd}"
