@@ -1,15 +1,14 @@
-bundleId = 'com.google.Chrome.canary'
-app = Application(bundleId)
+@run = (argv) =>
+  @bundleId = argv[0]
+  resourceUrls = JSON.parse(argv[1])
+  JSON.stringify(
+    newWindow(resourceUrls)
+  )
 
-
-@run = (argv) ->
-  resourceUrls = JSON.parse(argv[0])
-  JSON.stringify(newWindow(resourceUrls))
 
 
 newWindow = (resourceUrls) ->
-  directive = directives[bundleId]
-  if directive is null
+  directive = directives[bundleId] ||
     throw "no directive for #{bundleId}"
 
   window = directive.windowClass().make()
@@ -31,7 +30,7 @@ newWindow = (resourceUrls) ->
 loadResourcesInTabs = (window, resourceUrls) ->
   for resourceUrl, i in resourceUrls
     if i != 0
-      window.tabs.push(new app.Tab())
+      window.tabs.push(new app().Tab())
     window.tabs[window.tabs.length-1].url = resourceUrl
 
   return {
@@ -40,20 +39,23 @@ loadResourcesInTabs = (window, resourceUrls) ->
   }
 
 
+app = -> Application(@bundleId)
+
+
 directives = {
   "com.apple.Safari":
-    windowClass: -> app.Document()
+    windowClass: -> app().Document()
     loadResources: loadResourcesInTabs
 
   "com.apple.SafariTechnologyPreview":
-    windowClass: -> app.Document()
+    windowClass: -> app().Document()
     loadResources: loadResourcesInTabs
 
   "com.google.Chrome":
-    windowClass: -> app.Window()
+    windowClass: -> app().Window()
     loadResources: loadResourcesInTabs
 
   "com.google.Chrome.canary":
-    windowClass: -> app.Window()
+    windowClass: -> app().Window()
     loadResources: loadResourcesInTabs
 }

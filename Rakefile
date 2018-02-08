@@ -21,6 +21,7 @@ end
 desc "concatenate"  
 task :concat do
 
+  # tactically concatenate the building blocks to the probe script.
   extensions_path = "#{build_path}"
   base_script = "#{build_path}/read_windows.js"
 
