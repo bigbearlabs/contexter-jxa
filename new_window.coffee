@@ -7,13 +7,13 @@
 # test:
 # ---
 
-@run = (argv) =>
-  ###
-  # @bundleId = argv[0]
-  # resourceUrls = JSON.parse(argv[1])
 
+# NOTE we could make this a very comprehensive script that falls back to the equivalent of NSWorkspace#open, but we won't since there doesn't seem to be too pressing a need to do so.
+
+@run = (argv) =>
+
+  # for quick testing:
   # argv = ["bundleId=com.google.Chrome.canary", "url=http://google.com"]
-  ###
 
   args = argsHash(argv)
 
