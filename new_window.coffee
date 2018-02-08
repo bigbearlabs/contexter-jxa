@@ -18,20 +18,20 @@
   args = argsHash(argv)
 
   @bundleId = args.bundleId
-  if !@bundleId
+  unless @bundleId?
     err = "e5: missing or bad argument: bundleId"
 
-  resourceUrls = 
+  resourceUrls =
     if args.url
       [args.url]
     else if args.resourceUrls
       JSON.parse(args.resourceUrls)
 
-  if !resourceUrls
+  unless resourceUrls?
     err = "e6: missing or bad argument: url|resourceUrls"
           
   @directive = directives[@bundleId]
-  if !@directive
+  unless @directive?
     err = "e4: no new_window directive for #{bundleId}"
 
   if err
