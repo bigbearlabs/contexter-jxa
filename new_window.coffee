@@ -34,15 +34,15 @@
   unless @directive?
     err = "e4: no new_window directive for #{bundleId}"
 
-  if err
-    return {
-      err: err
-    }
+  result =
+    if err?
+      {
+        err: err
+      }
+    else
+      newWindow(resourceUrls)
 
-
-  return JSON.stringify(
-    newWindow(resourceUrls)
-  )
+  return JSON.stringify(result)
 
 
 newWindow = (resourceUrls) =>
