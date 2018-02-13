@@ -31,13 +31,13 @@ newWindow = (resourceUrlsString) ->
 
   result = exec(cmd, params)
 
-  return \
+  return {
     cmd: cmd
     params: params
     result: result
     new_window:
       id: "FIX_STUB!!!"
-  
+  }
 
 quotedPaths = (urlStrings) ->
   urlStrings.map (s) ->
