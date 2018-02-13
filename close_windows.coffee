@@ -1,7 +1,7 @@
 ### close windows of an app. ###
 
 
-shouldDebug = false
+DEBUG = false
 
 @run = (argv) ->
   bundleId = argv[0]
@@ -9,12 +9,9 @@ shouldDebug = false
   urls = JSON.parse(argv[2])
 
   # first try parsing into a number.
-  windowIds = windowIds.map (e) ->
-    i = parseInt(e)
-    if isNaN(i)
-      e
-    else 
-      i
+  windowIds = windowIds.map (id) ->
+    parsedId = parseInt(id)
+    return (if isNaN(parsedId) then id else parsedId)
 
   try
     app = Application(bundleId)
@@ -23,21 +20,22 @@ shouldDebug = false
   catch e
     console.log "error closing window using default impl: #{e}"
 
-    if shouldDebug
+    if DEBUG
       debugger
 
-    app = Application('System Events').applicationProcesses[app.name()]
-    try 
+    appProcess = Application('System Events').applicationProcesses[app.name()]
+    try
       windowIds.forEach (windowId) ->
-        closeWindowWithSystemEvents(app, windowId)
+        closeWindowWithSystemEvents(appProcess, windowId)
     catch e
       console.log "error closing window using fallback impl: #{e}"
       urls.forEach (url) ->
-        closeWindowWithSystemEvents(app, null, url)
+        closeWindowWithSystemEvents(appProcess, null, url)
+
 
 closeWindow = (app, windowId) ->
   window = app.windows.byId(windowId)()
-  if window
+  if window?
     window.close()
   else
     throw {
@@ -45,20 +43,20 @@ closeWindow = (app, windowId) ->
       data: [ app, windowId ]
     }
 
-closeWindowWithSystemEvents = (app, windowId, url) ->
-  window = app.windows().find (w) ->
-    if windowId 
+closeWindowWithSystemEvents = (appProcess, windowId, url) ->
+  window = appProcess.windows().find (w) ->
+    if windowId?
       w.attributes["AXIdentifier"].value() == windowId
     else
       w.attributes["AXDocument"].value() == url
 
-  if !window  
+  if !window?
     throw {
       msg: "e3: window not found",
-      data: [app, windowId, url]
+      data: [appProcess, windowId, url]
     }
     
-  closeButton = window.buttons().find (e) ->
-    e.attributes["AXSubrole"].value() == "AXCloseButton"
+  closeButton = window.buttons().find (b) ->
+    b.attributes["AXSubrole"].value() == "AXCloseButton"
 
   closeButton.actions["AXPress"].perform()
