@@ -4,24 +4,26 @@
 DEBUG = false
 
 @run = (argv) ->
-  bundleId = argv[0]
-  windowIds = JSON.parse(argv[1])
-  urls = JSON.parse(argv[2])
-  titles = JSON.parse(argv[3])
+  args = argsHash(argv)
+
+  bundleId = args.bundleId || (throw "bundle id is required")
+  windowIds = JSON.parse(args.windowIds || "[]")
+  urls = JSON.parse(args.urls || "[]")
+  titles = JSON.parse(args.titles || "[]")
 
   # first try parsing into a number.
-  windowIds = windowIds.map (id) ->
+  windowIds = windowIds?.map (id) ->
     parsedId = parseInt(id)
     if isNaN(parsedId)
-      id 
-    else 
+      id
+    else
       parsedId
 
   app = Application(bundleId)
 
   try
-    if windowIds.length < 1
-      throw "no windowIds"
+    if !(windowIds?) or windowIds.length < 1
+      throw Error("no windowIds")
 
     results = windowIds.map (windowId) ->
       closeWindow(app, windowId)
@@ -35,13 +37,15 @@ DEBUG = false
 
     appProcess = Application('System Events').applicationProcesses[app.name()]
 
-    windowSpecifiers = 
-      if windowIds.length != 0
+    windowSpecifiers =
+      if windowIds?.length > 0
         windowIds.map (windowId) -> {windowId}
-      else if urls.length != 0
+      else if urls?.length > 0
         urls.map (url) -> {url}
-      else if titles.length != 0
+      else if titles?.length > 0
         titles.map (title) -> {title}
+      else
+        throw "could not create window specifiers."
 
     results = windowSpecifiers.map (e) ->
       closeWindowWithSystemEvents(appProcess, e)
@@ -78,7 +82,7 @@ closeWindowWithSystemEvents = (appProcess, windowSpecifier) ->
   }
 
 
-findWindow = (appProcess, windowSpecifier) -> 
+findWindow = (appProcess, windowSpecifier) ->
   matches = appProcess.windows().filter (w) ->
 
     windowId = windowSpecifier.windowId
@@ -97,6 +101,22 @@ findWindow = (appProcess, windowSpecifier) ->
 
   if matches.length != 1
     # TODO
-    throw "IMPL matches don't conform: #{matches}."
+    throw Error("IMPL matches don't conform: #{matches}.")
 
   return matches[0]
+
+
+
+# ### util
+
+argsHash = (argv) ->
+  # for each bit, split to <key>=<value>, to return a k-v pair.
+  # reduce it down to a pojo and return.
+
+  argsObj = argv.reduce (acc, token) ->
+    [k, v] = token.split("=")
+    acc[k] = v
+    acc
+  , {}
+
+  return argsObj
