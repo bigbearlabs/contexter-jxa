@@ -6,7 +6,7 @@ DEBUG = false
 @run = (argv) ->
   args = argsHash(argv)
 
-  bundleId = args.bundleId || (throw "bundle id is required")
+  bundleId = args.bundleId || (throw Error("bundle id is required"))
   windowIds = JSON.parse(args.windowIds || "[]")
   urls = JSON.parse(args.urls || "[]")
   titles = JSON.parse(args.titles || "[]")
@@ -45,7 +45,7 @@ DEBUG = false
       else if titles?.length > 0
         titles.map (title) -> {title}
       else
-        throw "could not create window specifiers."
+        throw Error("could not create window specifiers.")
 
     results = windowSpecifiers.map (e) ->
       closeWindowWithSystemEvents(appProcess, e)
@@ -100,8 +100,9 @@ findWindow = (appProcess, windowSpecifier) ->
     return false
 
   if matches.length != 1
-    # TODO
     throw Error("IMPL matches don't conform: #{matches}.")
+
+    # TODO handle 0, >1 cases.
 
   return matches[0]
 
