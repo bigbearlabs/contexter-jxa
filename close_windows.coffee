@@ -27,7 +27,7 @@ DEBUG = false
 
     results = windowIds.map (windowId) ->
       closeWindow(app, windowId)
-    return JSON.stringify(results)
+    return JSON.stringify({results})
 
   catch e
     console.log "error closing window using default impl: #{e}"
@@ -50,7 +50,7 @@ DEBUG = false
     results = windowSpecifiers.map (e) ->
       closeWindowWithSystemEvents(appProcess, e)
 
-    return JSON.stringify(results)
+    return JSON.stringify({results})
 
 closeWindow = (app, windowId) ->
   window = app.windows.byId(windowId)()
