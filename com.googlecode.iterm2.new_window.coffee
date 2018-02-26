@@ -13,6 +13,7 @@ app = Application(bundleId)
 @run = (argv) ->
   args = argsHash(argv)
   resourceUrls = JSON.parse(args.resourceUrls)
+  return JSON.stringify(newWindow(resourceUrls))
 
 
 newWindow = (resourceUrls) ->
