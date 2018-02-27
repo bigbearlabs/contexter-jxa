@@ -9,9 +9,10 @@ DEBUG = false
   bundleId = args.bundleId || (throw Error("bundle id is required"))
   windowIds = JSON.parse(args.windowIds || "[]")
   urls = JSON.parse(args.urls || "[]")
+  documents = JSON.parse(args.documents || "[]")
   titles = JSON.parse(args.titles || "[]")
 
-  # first try parsing into a number.
+  # first try parsing into a number to meet contract with scripting / GUI scripting API.
   windowIds = windowIds?.map (id) ->
     parsedId = parseInt(id)
     if isNaN(parsedId)
@@ -42,6 +43,8 @@ DEBUG = false
         windowIds.map (windowId) -> {windowId}
       else if urls?.length > 0
         urls.map (url) -> {url}
+      else if documents?.length > 0
+        documents.map (document) -> {document}
       else if titles?.length > 0
         titles.map (title) -> {title}
       else
@@ -92,6 +95,10 @@ findWindow = (appProcess, windowSpecifier) ->
     url = windowSpecifier.url
     if url?
       return w.url() is url
+
+    document = windowSpecifier.document
+    if document?
+      return w.attributes["AXDocument"].value() is document
 
     title = windowSpecifier.title
     if title?
