@@ -12,22 +12,32 @@ DEBUG = false
   documents = JSON.parse(args.documents || "[]")
   titles = JSON.parse(args.titles || "[]")
 
-  # first try parsing into a number to meet contract with scripting / GUI scripting API.
-  windowIds = windowIds?.map (id) ->
-    parsedId = parseInt(id)
-    if isNaN(parsedId)
-      id
-    else
-      parsedId
-
   app = Application(bundleId)
 
   try
-    if !(windowIds?) or windowIds.length < 1
-      throw Error("no windowIds")
+    # try closing by window id.
+    
+    # first try parsing into a number to meet contract with scripting / GUI scripting API.
+    windowIds = windowIds?.map (id) ->
+      parsedId = parseInt(id)
+      if isNaN(parsedId)
+        id
+      else
+        parsedId
 
-    results = windowIds.map (windowId) ->
-      closeWindow(app, windowId)
+    if windowIds?.length > 0
+      results = windowIds.map (windowId) ->
+        closeWindowId(app, windowId)
+
+    else if documents?.length > 0
+      paths = documents.map (url) ->
+        toPath(url)
+      results = paths.map (path) ->
+        closePath(app, path)
+
+    else
+      throw Error("did not find arguments suitable for closing using scripting API.")
+
     return JSON.stringify({results})
 
   catch e
@@ -55,7 +65,8 @@ DEBUG = false
 
     return JSON.stringify({results})
 
-closeWindow = (app, windowId) ->
+
+closeWindowId = (app, windowId) ->
   window = app.windows.byId(windowId)()
   unless window?
     throw {
@@ -69,6 +80,13 @@ closeWindow = (app, windowId) ->
     result: 0
     id: windowId
   }
+
+
+closePath = (app, path) ->
+  document = app.workspaceDocuments().find (doc) ->
+    doc.path() is path
+  document.close()
+
 
 closeWindowWithSystemEvents = (appProcess, windowSpecifier) ->
   window = findWindow(appProcess, windowSpecifier)
@@ -107,7 +125,7 @@ findWindow = (appProcess, windowSpecifier) ->
     return false
 
   if matches.length != 1
-    throw Error("IMPL matches don't conform: #{matches}.")
+    throw Error("IMPL matches don't meet expectations. windowSpecifier: #{windowSpecifier} matches: #{matches}.")
 
     # TODO handle 0, >1 cases.
 
@@ -128,3 +146,7 @@ argsHash = (argv) ->
   , {}
 
   return argsObj
+
+
+toPath = (url) ->
+  decodeURI(url).replace(/file:\/\//, "")
