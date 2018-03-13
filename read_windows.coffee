@@ -131,19 +131,20 @@ class WindowAccessor
   # TEST VALUES uncomment lines and run without any params to test the script on a specific bundleId.
   if argv.length == 0 or !bundleId or bundleId == ''
     # bundleId = 'com.googlecode.iterm2'  # DEV
-    throw "cx-jxa: no args"
+    throw Error("cx-jxa: no args")
 
   trace "probing app #{bundleId}"
 
   accessor = windowAccessor(bundleId)
 
+  windowProbeResult =
   if accessor.skipSystemEventsProbe
-    readWindows1(bundleId, filterWindowId, accessor)
+    readWindows(bundleId, filterWindowId, accessor)
   else
     returnFirstSuccessful [
       ->
         try
-          readWindows1(bundleId, filterWindowId, accessor)
+          readWindows(bundleId, filterWindowId, accessor)
         catch e
           trace e.stack
           throw e
@@ -151,32 +152,34 @@ class WindowAccessor
         readWindowsWithSystemEvents(bundleId, filterWindowId)
     ]
 
+  return toString(windowProbeResult)
+
+
 
 # read window info using the app's applescript dictionary.
-readWindows1 = (bundleId, filterWindowId, accessor) ->
+readWindows = (bundleId, filterWindowId, accessor) ->
   application = Application(bundleId)
   # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
 
-  toString
-    windows:
-      # array of windows containing elements (windowId, url, name).
-      accessor
-        .getWindows(application)
+  windows =
+    # array of windows containing elements (windowId, url, name).
+    accessor
+      .getWindows(application)
 
-        .map (window) ->
-          elementsFrom window, accessor
+      .map (window) ->
+        elementsFrom window, accessor
 
-        .filter (window) ->
-          if filterWindowId
-            window.elements[0].windowId == filterWindowId
-          else
-            true
+      .filter (window) ->
+        if filterWindowId
+          window.elements[0].windowId == filterWindowId
+        else
+          true
 
-        .map (elements) ->
-          return {
-            elements: elements
-            anchor: accessor.getAnchor(elements)
-          }
+      .map (elements) ->
+        elements: elements
+        anchor: accessor.getAnchor(elements)
+
+  return { windows }
 
 elementsFrom = (window, windowAccessor) ->
   try
@@ -213,13 +216,16 @@ elementsFrom = (window, windowAccessor) ->
       windowId: String(windowAccessor.getId(window))
     ]
 
+
 # read using system events.
 # adapted from https://forum.keyboardmaestro.com/t/path-of-front-document-in-named-application/1468
 # NOTE this will scope windows to current space only!
 readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
-  matches = Application('System Events').applicationProcesses.whose({bundleIdentifier: bundleId})
+  matches = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
   if matches.length == 0
-    return toString(err: 'e3: System Events did not return app for ' + bundleId)
+    return {
+      err: 'e3: System Events did not return app for ' + bundleId
+    }
 
   app = matches[matches.length-1]
   
@@ -228,13 +234,18 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
   try
     lstWins = app.windows()
   catch f
-    return toString(err: 'e1: No open documents found in ' + appName)
+    return {
+      err: 'e1: No windows found for ' + bundleId
+    }
   if lstWins
     # DOES THE WINDOW CONTAIN A SAVED DOCUMENT ?
     try
       strURL = lstWins[0].attributes['AXDocument'].value()
     catch g
-      return toString(err: 'e2: No open documents found in ' + appName)
+      return {
+        err: 'e2: No open documents found for ' + bundleId
+      }
+
   windows = lstWins.map((w0) ->
     windowId = 
       if w0.attributes.name().indexOf('AXIdentifier') > -1 
@@ -248,10 +259,12 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
       windowId: String(windowId)
     }
   )
-  toString 
+
+  return {
     windows: windows.map (window) ->
       elements: [ window ]
       anchor: window
+  }
 
 
 
@@ -264,7 +277,7 @@ trace = (out) ->
   # console.log out
 
 
-@returnFirstSuccessful = returnFirstSuccessful = (fns) ->
+returnFirstSuccessful = (fns) ->
   i = 0
   exceptions = []
   while i < fns.length
@@ -280,8 +293,9 @@ trace = (out) ->
       exceptions.push(e)
     i++
   debugger
-  throw "cx-jxa: no calls were successful. exceptions: #{toString(exceptions)}"
+  throw Error("cx-jxa: no calls were successful. exceptions: #{toString(exceptions)}")
   # TODO collect the exceptions for better debuggability.
+
 
 toString = (obj) ->
   JSON.stringify obj, null, '  '
@@ -301,3 +315,5 @@ windowAccessor = (app) ->
   return baseAccessor
 
 
+# expose some functions to the global context so included scripts can use them.
+@returnFirstSuccessful = returnFirstSuccessful
