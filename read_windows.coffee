@@ -124,7 +124,6 @@ class WindowAccessor
 
 # ## JXA entry point -- will be invoked by `osascript`.
 @run = (argv) ->
-  'use strict'
   bundleId = argv[0]
   filterWindowId = argv[1]
 
@@ -230,38 +229,41 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
   app = matches[matches.length-1]
   
   # IS THERE AN OPEN WINDOW IN AN APPLICATION OF THIS NAME ?
-  lstWins = null
+  windows = null
   try
-    lstWins = app.windows()
+    windows = app.windows()
   catch f
     return {
-      err: 'e1: No windows found for ' + bundleId
+      err: 'e1: error obtaining windows for ' + bundleId
     }
-  if lstWins
-    # DOES THE WINDOW CONTAIN A SAVED DOCUMENT ?
+
+  unless windows?
+    return {
+      err: "e2: error obtaining windows for #{bundleId}"
+    }
+
+  windowsData = windows.map (w) ->
     try
-      strURL = lstWins[0].attributes['AXDocument'].value()
+      windowId = 
+        if w.attributes.name().indexOf('AXIdentifier') > -1 
+          String(w.attributes['AXIdentifier'].value())
+        else
+          ""
+
+      return {
+        url: w.attributes['AXDocument'].value()
+        name: w.attributes['AXTitle'].value()
+        frame: "{{" + w.position() + "}, {" + w.size() + "}}"
+        windowId: windowId
+      }
+      
     catch g
       return {
-        err: 'e2: No open documents found for ' + bundleId
-      }
-
-  windows = lstWins.map((w0) ->
-    windowId = 
-      if w0.attributes.name().indexOf('AXIdentifier') > -1 
-        w0.attributes['AXIdentifier'].value()
-      else
-        ""
-    {
-      url: w0.attributes['AXDocument'].value()
-      name: w0.attributes['AXTitle'].value(),
-      frame: "{{" + w0.position() + "}, {" + w0.size() + "}}",
-      windowId: String(windowId)
-    }
-  )
+        err: "e2: error obtaining url for #{[bundleId, w]}"
+      }  
 
   return {
-    windows: windows.map (window) ->
+    windows: windowsData.map (window) ->
       elements: [ window ]
       anchor: window
   }
