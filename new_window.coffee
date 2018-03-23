@@ -17,57 +17,38 @@
 
   args = argsHash(argv)
 
-  @bundleId = args.bundleId
-  unless @bundleId?
-    err = "e5: missing or bad argument: bundleId"
+  bundleId = args.bundleId || throw Error("e5: missing or bad argument: bundleId")
 
   resourceUrls =
     if args.url
       [args.url]
     else if args.resourceUrls
       JSON.parse(args.resourceUrls)
-
   unless resourceUrls?
-    err = "e6: missing or bad argument: url|resourceUrls"
+    throw Error("e6: missing or bad argument: url|resourceUrls")
           
-  @directive = directives[@bundleId]
-  unless @directive?
-    err = "e4: no new_window directive for #{bundleId}"
+    # err = "e4: no new_window directive for #{bundleId}"
+
+  app = Application(bundleId)
 
   result =
-    if err?
-      {
-        err: err
-      }
-    else
-      newWindow(resourceUrls)
+    unless directive = directives[bundleId]
+      newWindow(app, resourceUrls, directive)
+    else 
+      # newWindowUsingOpen(app, resourceUrls)
+      throw Error("no directive")
 
+  debugger
   return JSON.stringify(result)
 
 
-newWindow = (resourceUrls) =>
+newWindow = (app, resourceUrls, directive) =>
 
-  window = @directive.windowClass().make()
+  window = directive.windowClass().make()
   # delay(0.1)
 
   # window = app.windows[0]
-  return @directive.loadResources(window, resourceUrls)
-
-# newWindow = (resourceUrls) ->
-#   window = windowClass().make()
-#   # delay(0.1)
-
-#   # window = app.windows[0]
-#   return loadResources(window, resourceUrls)
-
-
-# for windows with tabs
-# e.g. safari, chrome
-loadResourcesInTabs = (window, resourceUrls) ->
-  for resourceUrl, i in resourceUrls
-    if i != 0
-      window.tabs.push(new app().Tab())
-      window.tabs[window.tabs.length-1].url = resourceUrl
+  directive.loadResources(app, window, resourceUrls)
 
   return {
     new_window:
@@ -75,24 +56,34 @@ loadResourcesInTabs = (window, resourceUrls) ->
   }
 
 
-app = -> Application(@bundleId)
+# newWindowUsingOpen = (app, resourceUrls) ->
+#   resourceUrls.forEach (url) ->
+#     app.open(url)
+
+# for windows with tabs
+# e.g. safari, chrome
+loadResourcesInTabs = (app, window, resourceUrls) ->
+  for resourceUrl, i in resourceUrls
+    if i != 0
+      window.tabs.push(app.Tab())
+      window.tabs[window.tabs.length-1].url = resourceUrl
 
 
 directives = {
   "com.apple.Safari":
-    windowClass: -> app().Document()
+    windowClass: -> app.Document()
     loadResources: loadResourcesInTabs
 
   "com.apple.SafariTechnologyPreview":
-    windowClass: -> app().Document()
+    windowClass: -> app.Document()
     loadResources: loadResourcesInTabs
 
   "com.google.Chrome":
-    windowClass: -> app().Window()
+    windowClass: -> app.Window()
     loadResources: loadResourcesInTabs
 
   "com.google.Chrome.canary":
-    windowClass: -> app().Window()
+    windowClass: -> app.Window()
     loadResources: loadResourcesInTabs
 }
 
