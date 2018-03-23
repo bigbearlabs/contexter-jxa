@@ -32,7 +32,7 @@
 
         return cmdOut
       else
-        throw 'cx-jxa: no ttyName for window'
+        throw Error('cx-jxa: no ttyName for window')
 
     catch e
       debugger
