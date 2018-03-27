@@ -17,12 +17,16 @@ app = Application(bundleId)
 
 
 newWindow = (resourceUrls) ->
-  path = $.NSURL.URLWithString(resourceUrls[0]).path.cString
+  # create the window.
   window = app.createWindowWithDefaultProfile()
+
+  # navigate to resource.
+  path = $.NSURL.URLWithString(resourceUrls[0]).path.cString
   session = window.tabs[0].sessions[0]
-  cmd ="cd '#{path}'"
+  cmd = "cd '#{path}'"
   app.write(session,{text: cmd})
 
+  # return.
   return {
     new_window:
       id: window.id()

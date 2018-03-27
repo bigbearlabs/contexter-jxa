@@ -21,12 +21,11 @@ app = Application(bundleId)
   return JSON.stringify(newWindow(resourceUrls))
 
 
-newWindow = (resourceUrls) ->
-  firstPathString = paths(resourceUrls)[0]
-  firstPath = Path(firstPathString)
-
+newWindow = (resourceUrls) ->  
   window = app.FinderWindow().make()
 
+  firstPathString = paths(resourceUrls)[0]
+  firstPath = Path(firstPathString)
   window.properties = {
     target: Path(firstPath)
   }
