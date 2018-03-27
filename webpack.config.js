@@ -7,7 +7,7 @@ const JxaPlugin = require("./src/plugin/jxa-plugin");
 // exec exported function plugin creates an executable .js file that will simply `module.exports(argv)`.
 const ExecExportedFunctionPlugin = require("./src/plugin/exec-exported-function-plugin");
 
-const PermissionsOutputPlugin = require('webpack-permissions-plugin');
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 
 
@@ -71,17 +71,6 @@ module.exports = [{
   plugins: [
     // new UglifyJSPlugin(),
     new JxaPlugin(),
-
-    new PermissionsOutputPlugin({
-      buildFolders: [
-        path.resolve(__dirname, 'dist/')
-      ]
-      // ,
-      // buildFiles: [
-      //   path.resolve(__dirname, 'someFile.js'),
-      //   path.resolve(__dirname, 'dist/app.js')
-      // ]
-    })
   ]
 },
 
@@ -113,20 +102,6 @@ module.exports = [{
   },
 
   plugins: [
-    // new UglifyJSPlugin(),
-    // new JxaPlugin(),
-    
     new ExecExportedFunctionPlugin(),
-
-    new PermissionsOutputPlugin({
-      buildFolders: [
-        path.resolve(__dirname, 'dist/')
-      ]
-      // ,
-      // buildFiles: [
-      //   path.resolve(__dirname, 'someFile.js'),
-      //   path.resolve(__dirname, 'dist/app.js')
-      // ]
-    })
   ]
 }];

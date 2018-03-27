@@ -5,8 +5,8 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack --mode development --watch",
-    "build": "webpack --mode development"
+    "dev": "webpack --mode development --watch &; chmod a+x dist/*",
+    "build": "webpack --mode development && chmod a+x dist/*"
   },
   "author": "",
   "license": "ISC",
@@ -16,7 +16,8 @@
     "uglifyjs-webpack-plugin": "^1.2.4",
     "webpack": "^4.1.1",
     "webpack-cli": "^2.0.12",
-    "webpack-permissions-plugin": "^1.0.0"
+    "webpack-permissions-plugin": "^1.0.0",
+    "webpack-shell-plugin": "^0.5.0"
   },
   "dependencies": {
     "npm": "^5.7.1"
