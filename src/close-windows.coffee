@@ -3,7 +3,7 @@
 
 DEBUG = false
 
-@run = (argv) ->
+global.main = (argv) ->
   args = argsHash(argv)
 
   bundleId = args.bundleId || (throw Error("bundle id is required"))
@@ -150,3 +150,4 @@ argsHash = (argv) ->
 
 toPath = (url) ->
   decodeURI(url).replace(/file:\/\//, "")
+  

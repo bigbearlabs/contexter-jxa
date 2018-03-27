@@ -1,0 +1,132 @@
+/*jshint esversion: 6 */
+
+
+// jxa plugin creates an executable .js file for each of the webpack entry points defined below.
+const JxaPlugin = require("./src/plugin/jxa-plugin");
+
+// exec exported function plugin creates an executable .js file that will simply `module.exports(argv)`.
+const ExecExportedFunctionPlugin = require("./src/plugin/exec-exported-function-plugin");
+
+const PermissionsOutputPlugin = require('webpack-permissions-plugin');
+
+
+
+const webpack = require('webpack')
+const path = require('path')
+
+
+/*
+ * We've enabled UglifyJSPlugin for you! This minifies your app
+ * in order to load faster and run less javascript.
+ *
+ * https://github.com/webpack-contrib/uglifyjs-webpack-plugin
+ *
+ */
+
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+
+
+
+
+/*
+ * We've enabled commonsChunkPlugin for you. This allows your app to
+ * load faster and it splits the modules you provided as entries across
+ * different bundles!
+ *
+ * https://webpack.js.org/plugins/commons-chunk-plugin/
+ *
+ */
+
+
+
+module.exports = [{
+  devtool: 'source-map',
+
+  entry: {
+    "probe-windows": "./src/probe-windows.coffee",
+    // close: "./src/close.js",
+    "new-window": "./src/new-window.coffee",
+    "close-windows": "./src/close-windows.coffee"
+  },
+
+  output: {
+    filename: '[name].js',
+    chunkFilename: '[name].[chunkhash].js',
+    path: path.resolve(__dirname, 'dist')
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.coffee$/,
+        use: [ 'coffee-loader' ]
+      }
+    ]
+  },
+
+  resolve: {
+    extensions: [".web.coffee", ".web.js", ".coffee", ".js"]
+  },
+
+  plugins: [
+    // new UglifyJSPlugin(),
+    new JxaPlugin(),
+
+    new PermissionsOutputPlugin({
+      buildFolders: [
+        path.resolve(__dirname, 'dist/')
+      ]
+      // ,
+      // buildFiles: [
+      //   path.resolve(__dirname, 'someFile.js'),
+      //   path.resolve(__dirname, 'dist/app.js')
+      // ]
+    })
+  ]
+},
+
+// lib scripts to test.
+{
+  devtool: 'source-map',
+
+  entry: {
+    "newWindow_openCmd": "./src/lib/newWindow_openCmd.coffee"
+  },
+
+  output: {
+    filename: '[name].js',
+    chunkFilename: '[name].[chunkhash].js',
+    path: path.resolve(__dirname, 'dist')
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.coffee$/,
+        use: [ 'coffee-loader' ]
+      }
+    ]
+  },
+
+  resolve: {
+    extensions: [".web.coffee", ".web.js", ".coffee", ".js"]
+  },
+
+  plugins: [
+    // new UglifyJSPlugin(),
+    // new JxaPlugin(),
+    
+    new ExecExportedFunctionPlugin(),
+
+    new PermissionsOutputPlugin({
+      buildFolders: [
+        path.resolve(__dirname, 'dist/')
+      ]
+      // ,
+      // buildFiles: [
+      //   path.resolve(__dirname, 'someFile.js'),
+      //   path.resolve(__dirname, 'dist/app.js')
+      // ]
+    })
+  ]
+}];

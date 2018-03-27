@@ -7,4 +7,4 @@ The API allows you to add support for any app you use in workflows you want to f
 Not a developer? Easy, just make a request, and see it developed by the community.
 
 
-## TODO [Getting started guide]
+## TODO [Getting started]

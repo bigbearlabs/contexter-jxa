@@ -1,7 +1,7 @@
 # ---
 # doit: 
 #   cmd: | 
-#     coffee -cp #{file} | osascript -l JavaScript - #{bundleId}
+#     sleep 0.3 & `dirname #{file}`/../dist/`basename #{file} .coffee`.js com.apple.dt.Xcode
 #   args:
 #     bundleId:
 #       - com.apple.Safari
@@ -20,110 +20,13 @@
 # ---
 
 
-# BEGIN extractable interface
-# NOTE This the skeleton upon which customisers can return appropriate values to record context.
-# The skeleton implementation works with 'typical' applescriptable document-based apps, and some common browsers.
-# 
-# We still need to find a good way to allow for an extension of this class in another file, without dragging in a complicated requiring mechanism.
-# A tempting option is to just concatenate the scripts files in the right order, and rely on documentation to 'expose' the extensible prototype.
+windowAccessor = require('./windowAccessor')
+returnFirstSuccessful = require('./lib/returnFirstSuccessful')
 
-
-class WindowAccessor
-
-  # ## most customisation-relevant
-
-  # return a url or posix path for a window's element.
-  getUrl: (element) ->
-    returnFirstSuccessful [
-      ->
-        element.url()
-      ->
-        # keynote
-        element.file().toString()
-      ->
-        # preview
-        element.path()
-    ]
-
-  # return one of the elements of a window which url is bookmarked.
-  # the default implementation returns either the single element or the first element marked as 'current'.
-  getAnchor: (elements) ->
-    if elements.length == 1
-      elements[0]
- 
-    else
-      # for multiple elements, return the one marked as current.
-      if currentElem = elements.find((e) ->
-          if e and e.current
-            e.current
-          else
-            false
-          )
-        currentElem
-      else
-        throw toString {
-          msg: "cx-jxa: no element marked as current"
-          data: elements
-        }
-
-  # return elements of a window.
-  # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
-  # if returning only one element for a window (simplest implementation), make sure it's in an array.
-  getElements: (window) ->
-    returnFirstSuccessful [
-      ->
-        # finder-style script vocabulary
-        [ window.target() ]
-      ->
-        # browser-style script vocabulary
-        window.tabs()
-      ->
-        # vocabulary for doc windows
-        [ window.document() ]
-    ]
-
-
-  # ## window-level accessors
-
-  getId: (window) ->
-    window.id()
-
-  getName: (window) ->
-    window.name()
-
-  # return index of the window's element which is frontmost.
-  getCurrentElementIndex: (window, elements) ->
-    returnFirstSuccessful [
-      -> 
-        window.currentTab().index() - 1
-      ->
-        # for chrome, use activeTab instead.
-        window.activeTabIndex() - 1 # chrome Version 56.0.2913.3 canary (64-bit)
-      ->
-        null
-    ]
-
-  # ## element-level accessors
-
-  getElementName: (element) ->
-    element.name()
-
-
-  # ## app-level accessors
-
-  getWindows: (application) ->
-    application.windows()
-
-    # DEV uncomment below to reduce probe volume to the frontmost window of the app.
-    # [ application.windows()[0] ]
-
-      
-
-# END
 
 
 # ## JXA entry point -- will be invoked by `osascript`.
-@run = (argv) ->
+global.main = (argv) ->
   bundleId = argv[0]
   filterWindowId = argv[1]
 
@@ -156,17 +59,17 @@ class WindowAccessor
 
 
 # read window info using the app's applescript dictionary.
-readWindows = (bundleId, filterWindowId, accessor) ->
+readWindows = (bundleId, filterWindowId, windowAccessor) ->
   application = Application(bundleId)
   # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
 
   windows =
     # array of windows containing elements (windowId, url, name).
-    accessor
+    windowAccessor
       .getWindows(application)
 
       .map (window) ->
-        elementsFrom window, accessor
+        elementsFrom window, windowAccessor
 
       .filter (window) ->
         if filterWindowId
@@ -176,7 +79,7 @@ readWindows = (bundleId, filterWindowId, accessor) ->
 
       .map (elements) ->
         elements: elements
-        anchor: accessor.getAnchor(elements)
+        anchor: windowAccessor.getAnchor(elements)
 
   return { windows }
 
@@ -278,44 +181,22 @@ trace = (out) ->
   # DEV uncomment to see logging statements.
   # console.log out
 
-
-returnFirstSuccessful = (fns) ->
-  i = 0
-  exceptions = []
-  while i < fns.length
-    fn = fns[i]
-    try
-      if fn.callAsFunction
-        return fn.callAsFunction()
-      else
-        # debugger
-        return fn.apply()
-    catch e
-      # this function threw -- move on to the next one.
-      exceptions.push(e)
-    i++
-  debugger
-  throw Error("cx-jxa: no calls were successful. exceptions: #{toString(exceptions)}")
-  # TODO collect the exceptions for better debuggability.
-
-
 toString = (obj) ->
   JSON.stringify obj, null, '  '
 
 
-# merge the object provided by bundle-specific script to the base accessor instance.
-# if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
-windowAccessor = (app) ->
-  baseAccessor = new WindowAccessor()
+# # FIXME replace with a require graph: probe -> <app-bundle-id>/window-accessor.coffee -> window-accessor.coffee
+# # or #windowAccessor -> WindowAccessor -> <app-bundle-id>/window-accessor.coffee
+# # 
+# # merge the object provided by bundle-specific script to the base accessor instance.
+# # if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
+# windowAccessor = (app) ->
+#   baseAccessor = new WindowAccessor()
 
-  if @windowAccessor and @windowAccessor.bundleId == app
-    Object.getOwnPropertyNames(@windowAccessor).forEach (propertyName) ->
-      propertyVal = @windowAccessor[propertyName]
-      baseAccessor[propertyName] = propertyVal
-      trace "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
+#   if @windowAccessor and @windowAccessor.bundleId == app
+#     Object.getOwnPropertyNames(@windowAccessor).forEach (propertyName) ->
+#       propertyVal = @windowAccessor[propertyName]
+#       baseAccessor[propertyName] = propertyVal
+#       trace "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
     
-  return baseAccessor
-
-
-# expose some functions to the global context so included scripts can use them.
-@returnFirstSuccessful = returnFirstSuccessful
+#   return baseAccessor
