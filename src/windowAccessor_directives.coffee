@@ -1,3 +1,6 @@
+returnFirstSuccessful = require('./lib/returnFirstSuccessful')
+
+
 # directives for app-specific operations to override those defined in `baseAccessor`.
 module.exports = directives =
 
