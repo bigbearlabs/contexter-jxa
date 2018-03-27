@@ -7,9 +7,4 @@ The API allows you to add support for any app you use in workflows you want to f
 Not a developer? Easy, just make a request, and see it developed by the community.
 
 
-## [getting started guide]
-
-## Reference 
-
-- Interface
-  Until it stabilises, refer to the CoffeeScript class `WindowAccessor` in `read_windows.coffee`.
+## TODO [Getting started guide]
