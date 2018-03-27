@@ -24,9 +24,10 @@ module.exports =
 
     newWindowId = newWindowIds[0]
 
-    return JSON.stringify
+    return {
       new_window:
         id: newWindowId
+    }
 
 
 open = (bundleId, resourceUrl) ->

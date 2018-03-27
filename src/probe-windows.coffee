@@ -112,7 +112,7 @@ elementsFrom = (window, windowAccessor) ->
     debugger
 
     [
-      err: e.toString()
+      err: e
       name: windowAccessor.getName(window)
 
       windowId: String(windowAccessor.getId(window))

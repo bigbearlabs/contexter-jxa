@@ -15,6 +15,6 @@ module.exports =
         exceptions.push(e)
       i++
     debugger
-    throw Error("cx-jxa: no calls were successful. exceptions: #{toString(exceptions)}")
+    throw Error("cx-jxa: no calls were successful. exceptions: #{JSON.stringify(exceptions)}")
     # TODO collect the exceptions for better debuggability.
 

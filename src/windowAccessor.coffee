@@ -47,7 +47,7 @@ baseAccessor =
           )
         currentElem
       else
-        throw toString {
+        throw JSON.stringify {
           msg: "cx-jxa: no element marked as current"
           data: elements
         }
