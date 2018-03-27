@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "webpack --mode development --watch &; chmod a+x dist/*",
+    "dev": "webpack --mode development --watch  # watch out -- scripts will need perms set before they can be run",
     "build": "webpack --mode development && chmod a+x dist/*"
   },
   "author": "",
