@@ -108,7 +108,7 @@ findWindow = (appProcess, windowSpecifier) ->
 
     windowId = windowSpecifier.windowId
     if windowId?
-      return w.id() is windowId
+      return w.attributes['AXIdentifier'].value() is windowId
     
     url = windowSpecifier.url
     if url?
