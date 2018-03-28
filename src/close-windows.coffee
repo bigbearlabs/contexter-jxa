@@ -1,7 +1,7 @@
 ### close windows of an app. ###
 
 
-DEBUG = false
+DEBUG = true
 
 global.main = (argv) ->
   args = argsHash(argv)
@@ -13,6 +13,8 @@ global.main = (argv) ->
   titles = JSON.parse(args.titles || "[]")
 
   app = Application(bundleId)
+
+  messages = []
 
   try
     # try closing by window id.
@@ -41,7 +43,7 @@ global.main = (argv) ->
     return JSON.stringify({results})
 
   catch e
-    console.log "error closing window using default impl: #{e}"
+    messages.push "error closing window using default impl: #{JSON.stringify(e)}"
 
     if DEBUG
       debugger
@@ -63,11 +65,14 @@ global.main = (argv) ->
     results = windowSpecifiers.map (e) ->
       closeWindowWithSystemEvents(appProcess, e)
 
+    if DEBUG
+      results.trace = messages
+
     return JSON.stringify({results})
 
 
 closeWindowId = (app, windowId) ->
-  window = app.windows.byId(windowId)()
+  window = app.windows().find (e) -> e.id() is windowId
   unless window?
     throw {
       msg: "e1: no window found",
@@ -125,7 +130,7 @@ findWindow = (appProcess, windowSpecifier) ->
     return false
 
   if matches.length != 1
-    throw Error("IMPL matches don't meet expectations. windowSpecifier: #{windowSpecifier} matches: #{matches}.")
+    throw Error("IMPL matches don't meet expectations. windowSpecifier: #{JSON.stringify windowSpecifier} matches: #{JSON.stringify matches}.")
 
     # TODO handle 0, >1 cases.
 
