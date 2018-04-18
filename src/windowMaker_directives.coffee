@@ -1,4 +1,4 @@
-module.exports = directives = 
+module.exports = directives =
 
   "com.apple.finder":
     createWindow: (app) -> return app.FinderWindow().make()
@@ -16,14 +16,14 @@ module.exports = directives =
 
 
   "com.apple.Safari":
-    createWindow: (app) -> 
+    createWindow: (app) ->
       app.Document().make()
       delay(0.5)
       return app.windows[0]
     loadResources: -> @loadResourcesInTabs(arguments...)
 
   "com.apple.SafariTechnologyPreview":
-    createWindow: (app) -> 
+    createWindow: (app) ->
       app.Document().make()
       return app.windows[0]
     loadResources: -> @loadResourcesInTabs(arguments...)

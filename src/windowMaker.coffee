@@ -2,7 +2,7 @@ returnFirstSuccessful = require('./lib/returnFirstSuccessful')
 directives = require('./windowMaker_directives')
 merged = require('./lib/merged')
 
-module.exports = 
+module.exports =
 
   (bundleId) ->
     specificOperations = directives[bundleId]
@@ -10,7 +10,7 @@ module.exports =
     return \
       if specificOperations?
         merged(baseMaker, specificOperations)
-      else 
+      else
         baseMaker
 
 
