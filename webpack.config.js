@@ -40,7 +40,7 @@ const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 
 module.exports = [{
-  devtool: 'source-map',
+  devtool: 'inline-source-map',
 
   entry: {
     "probe-windows": "./src/probe-windows.coffee",
@@ -76,7 +76,7 @@ module.exports = [{
 
 // lib scripts to test.
 {
-  devtool: 'source-map',
+  devtool: 'inline-source-map',
 
   entry: {
     "newWindow_openCmd": "./src/lib/newWindow_openCmd.coffee"
