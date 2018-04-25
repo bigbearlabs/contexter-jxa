@@ -1,5 +1,7 @@
 ### close windows of an app. ###
 
+returnFirstSuccessful = require('./lib/returnFirstSuccessful')
+
 
 DEBUG = true
 
@@ -113,7 +115,13 @@ findWindow = (appProcess, windowSpecifier) ->
 
     windowId = windowSpecifier.windowId
     if windowId?
-      return w.attributes['AXIdentifier'].value() is windowId
+      # find the window id using various means.
+      returnFirstSuccessful ->
+        w.id() is windowId
+      ,
+      ->
+        return w.attributes['AXIdentifier'].value() is windowId
+          
     
     url = windowSpecifier.url
     if url?
