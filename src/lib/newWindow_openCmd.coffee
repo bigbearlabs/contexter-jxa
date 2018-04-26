@@ -22,7 +22,7 @@ module.exports =
 
     # CASE more than 1 new window
 
-    newWindowId = newWindowIds[0]
+    newWindowId = newWindowIds.reverse()[0]
 
     return {
       new_window:
@@ -34,6 +34,16 @@ open = (bundleId, resourceUrl) ->
   # run shell command to `open <resourceUrl>`.
   cmd = "open -b #{bundleId} #{resourceUrl}"
   sh(cmd)
+
+
+
+#== extractables
+
+sh = (cmdString) ->
+  app = Application.currentApplication()
+  app.includeStandardAdditions = true
+  app.doShellScript(cmdString)
+
 
 executeReportingNewWindowIds = (bundleId, operation) ->
   # execute the operation, taking before / after snapshots of window list, to return the diff.
@@ -56,28 +66,27 @@ executeReportingNewWindowIds = (bundleId, operation) ->
   return newIds
 
 
-
-#== extractables
-
-sh = (cmdString) ->
-  app = Application.currentApplication()
-  app.includeStandardAdditions = true
-  app.doShellScript(cmdString)
-
-
 ObjC.import('Cocoa')
 
 queryCGWindows = (bundleId) ->
   # $.NSBeep()
   list = $.CGWindowListCopyWindowInfo($.kCGWindowListExcludeDesktopElements, $.kCGNullWindowID)
   convertedList = ObjC.deepUnwrap(list)  # [CGWindowInfo].
-  return convertedList
+
+  filteredList = convertedList
+    .filter (cgInfo) ->
+      pid = cgInfo["kCGWindowOwnerPID"]
+      runningAppForPid = $.NSRunningApplication.runningApplicationWithProcessIdentifier(pid)
+      runningAppBundleId = ObjC.unwrap(runningAppForPid.bundleIdentifier)
+      runningAppBundleId == bundleId
+
+  return filteredList
 
 
 sleepFor = `
   function ( sleepDuration ){
       var now = new Date().getTime();
-      while(new Date().getTime() < now + sleepDuration){ /* do nothing */ } 
+      while(new Date().getTime() < now + sleepDuration){ /* do nothing */ }
   }
 `
 
