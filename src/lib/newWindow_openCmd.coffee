@@ -8,26 +8,36 @@
 # test:
 # ---
 
+
+executeReportingNewWindowIds = require('./executeReportingNewWindowIds')
+
+
+
 module.exports =
 
-  (bundleId, resourceUrls) -> 
-    # CASE resourceUrls.length != 1
+(bundleId, resourceUrls) ->
+  # CASE resourceUrls.length != 1
 
-    resourceUrl = resourceUrls[0]
+  resourceUrl = resourceUrls[0]
 
-    newWindowIds = executeReportingNewWindowIds bundleId, ->
-      open(bundleId, resourceUrl)
+  newWindowIds = executeReportingNewWindowIds bundleId, ->
+    open(bundleId, resourceUrl)
 
-    # CASE no new windows
+  # CASE no new windows
 
-    # CASE more than 1 new window
+  # CASE more than 1 new window
 
-    newWindowId = newWindowIds.reverse()[0]
+  newWindowId = newWindowIds.reverse()[0]
 
-    return {
-      new_window:
-        id: newWindowId
-    }
+  return {
+    new_window:
+      id: newWindowId
+  }
+
+
+
+
+#== extractables
 
 
 open = (bundleId, resourceUrl) ->
@@ -37,7 +47,6 @@ open = (bundleId, resourceUrl) ->
 
 
 
-#== extractables
 
 sh = (cmdString) ->
   app = Application.currentApplication()
@@ -45,50 +54,6 @@ sh = (cmdString) ->
   app.doShellScript(cmdString)
 
 
-executeReportingNewWindowIds = (bundleId, operation) ->
-  # execute the operation, taking before / after snapshots of window list, to return the diff.
-  windowList = queryCGWindows(bundleId)
-
-  operation()
-
-  # need a delay with apps which are sluggish to open resources, e.g. Sourcetree
-  sleepFor(1500)  # STUB
-
-  windowListAfter = queryCGWindows(bundleId)
-
-  # diff the window ids.
-  windowIdsBefore = windowList.map (e) -> e["kCGWindowNumber"]
-  windowIdsAfter = windowListAfter.map (e) -> e["kCGWindowNumber"]
-
-  newIds = windowIdsAfter.filter (e) ->
-    windowIdsBefore.indexOf(e) < 0
-
-  return newIds
-
-
-ObjC.import('Cocoa')
-
-queryCGWindows = (bundleId) ->
-  # $.NSBeep()
-  list = $.CGWindowListCopyWindowInfo($.kCGWindowListExcludeDesktopElements, $.kCGNullWindowID)
-  convertedList = ObjC.deepUnwrap(list)  # [CGWindowInfo].
-
-  filteredList = convertedList
-    .filter (cgInfo) ->
-      pid = cgInfo["kCGWindowOwnerPID"]
-      runningAppForPid = $.NSRunningApplication.runningApplicationWithProcessIdentifier(pid)
-      runningAppBundleId = ObjC.unwrap(runningAppForPid.bundleIdentifier)
-      runningAppBundleId == bundleId
-
-  return filteredList
-
-
-sleepFor = `
-  function ( sleepDuration ){
-      var now = new Date().getTime();
-      while(new Date().getTime() < now + sleepDuration){ /* do nothing */ }
-  }
-`
 
 
 #== quick-and-dirty test harness method.
