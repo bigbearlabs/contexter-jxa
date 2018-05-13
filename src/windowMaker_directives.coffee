@@ -17,9 +17,22 @@ module.exports = directives =
 
   "com.apple.Safari":
     createWindow: (app) ->
+      winIdsBefore = app.windows().map((w) -> w.id())
       app.Document().make()
-      delay(0.5)
-      return app.windows[0]
+      winIdsAfter = app.windows().map((w) -> w.id())
+      newIds = winIdsAfter
+        .filter (id) ->
+          new Set(winIdsBefore).has(id) == false
+      # assert 1 and only 1 new id.
+      if newIds.length != 1
+        throw Error("expected only 1 new id after making a new window, but got new ids: #{newIds}")
+
+      newWindows = app.windows()
+        .filter (w) -> w.id() == newIds[0]
+      
+
+      return newWindows[0]
+
     loadResources: -> @loadResourcesInTabs(arguments...)
 
   "com.apple.SafariTechnologyPreview":
