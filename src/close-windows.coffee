@@ -1,6 +1,7 @@
 ### close windows of an app. ###
 
 returnFirstSuccessful = require('./lib/returnFirstSuccessful')
+argsHash = require './lib/argsHash'
 
 
 DEBUG = true
@@ -147,19 +148,6 @@ findWindow = (appProcess, windowSpecifier) ->
 
 
 # ### util
-
-argsHash = (argv) ->
-  # for each bit, split to <key>=<value>, to return a k-v pair.
-  # reduce it down to a pojo and return.
-
-  argsObj = argv.reduce (acc, token) ->
-    [k, v] = token.split("=")
-    acc[k] = v
-    acc
-  , {}
-
-  return argsObj
-
 
 toPath = (url) ->
   decodeURI(url).replace(/file:\/\//, "")

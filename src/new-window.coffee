@@ -9,6 +9,7 @@
 
 newWindow_openCmd = require './lib/newWindow_openCmd'
 windowMaker = require './windowMaker'
+argsHash = require './lib/argsHash'
 
 DEBUG = true  # debug
 
@@ -76,16 +77,3 @@ newWindow = (app, resourceUrls, windowMaker) ->
 
 
 
-# return a dictionary of args conventionally passed as an array of strings,
-# based on common sense expectations.
-argsHash = (argv) ->
-  # for each bit, split to <key>=<value>, to return a k-v pair.
-  # reduce it down to a pojo and return.
-
-  argsObj = argv.reduce (acc, token) ->
-    [k, v] = token.split("=")
-    acc[k] = v
-    acc
-  , {}
-
-  return argsObj
