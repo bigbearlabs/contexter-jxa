@@ -11,7 +11,12 @@ newWindow_openCmd = require './lib/newWindow_openCmd'
 windowMaker = require './windowMaker'
 argsHash = require './lib/argsHash'
 
-DEBUG = true  # debug
+stacktracer = require 'sourcemapped-stacktrace'
+# WIP this lib has strong assumptions on browser-based context
+# that we need to remove before we can use it in a jxa context.
+
+
+DEBUG = true  # debug HACK
 
 
 global.main = (argv) ->
@@ -19,42 +24,60 @@ global.main = (argv) ->
   # for quick testing:
   # argv = ["bundleId=com.google.Chrome.canary", "url=http://google.com"]
 
-  args = argsHash(argv)
+  try
 
-  bundleId = args.bundleId ||
-    throw Error("e5: missing or bad argument: bundleId")
+    args = argsHash(argv)
 
-  resourceUrls =
-    if args.url
-      [args.url]
-    else if args.resourceUrls
-      JSON.parse(args.resourceUrls)
-  unless resourceUrls?
-    throw Error("e6: missing or bad argument: url|resourceUrls")
-          
-    # err = "e4: no new_window directive for #{bundleId}"
+    bundleId = args.bundleId ||
+      throw Error("e5: missing or bad argument: bundleId")
 
-  app = Application(bundleId)
+    resourceUrls =
+      if args.url
+        [args.url]
+      else if args.resourceUrls
+        JSON.parse(args.resourceUrls)
+    unless resourceUrls?
+      throw Error("e6: missing or bad argument: url|resourceUrls")
+            
+      # err = "e4: no new_window directive for #{bundleId}"
 
-  windowMaker = windowMaker(bundleId)
+    app = Application(bundleId)
 
-  messages = []
-  result =
-    try
-      messages.push("using scripting API with maker #{windowMaker}")
-      newWindow(app, resourceUrls, windowMaker)
-    catch e
-      # throw e  # DEBUG
-      messages.push("using scripting API failed; falling back to openCmd. error: #{e}")
-      newWindow_openCmd(bundleId, resourceUrls)
+    windowMaker = windowMaker(bundleId)
 
-  if DEBUG
-    result.trace = messages
+    messages = []
+
+    result =
+
+      try
+        messages.push("using scripting API with maker for #{bundleId}")
+        newWindow(app, resourceUrls, windowMaker)
+
+      catch e
+        messages.push("using scripting API failed; falling back to openCmd. error: #{e}")
+
+        newWindow_openCmd(bundleId, resourceUrls)
+
+        # TODO for consistency, we should eventually fold the _openCmd impl
+        # into the window maker directives with a defaulting mechanism
+        # (so we can avoid enumerating all apps that must use this default directive)
+
+    if DEBUG
+      result.trace = messages
+      debugger
+
+    return JSON.stringify(result)
+
+
+  catch e
+    # to debug exceptions, enable the 'pause on js context' safari developer option.
     debugger
 
-  return JSON.stringify(result)
+    throw e
 
-
+    # TODO uncaught error tracing out stderr is very had to debug.
+    # catch and error out, with more relevant src info (e.g. .coffee line)
+  
 
 newWindow = (app, resourceUrls, windowMaker) ->
 
@@ -69,11 +92,6 @@ newWindow = (app, resourceUrls, windowMaker) ->
     new_window:
       id: windowId
   }
-
-
-# newWindowUsingOpen = (app, resourceUrls) ->
-#   resourceUrls.forEach (url) ->
-#     app.open(url)
 
 
 
