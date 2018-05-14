@@ -30,10 +30,10 @@ module.exports = directives =
       newWindows = app.windows()
         .filter (w) -> w.id() == newIds[0]
       
-
       return newWindows[0]
 
     loadResources: -> @loadResourcesInTabs(arguments...)
+
 
   "com.apple.SafariTechnologyPreview":
     createWindow: (app) ->
@@ -45,6 +45,7 @@ module.exports = directives =
   "com.google.Chrome":
     createWindow: (app) -> return app.Window().make()
     loadResources: -> @loadResourcesInTabs(arguments...)
+
 
   "com.google.Chrome.canary":
     createWindow: (app) -> return app.Window().make()
