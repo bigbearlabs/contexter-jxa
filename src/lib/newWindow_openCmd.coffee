@@ -16,22 +16,34 @@ executeReportingNewWindowIds = require('./executeReportingNewWindowIds')
 module.exports =
 
 (bundleId, resourceUrls) ->
-  # CASE resourceUrls.length != 1
+  
+  if resourceUrls.length != 1
+    throw Error("new-window using `open`only supports 1 resource url.")
 
   resourceUrl = resourceUrls[0]
+
+  # launch app if it's not found and wait a little for it to warm up.
+  processForBid = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
+  if processForBid.length == 0
+    Application(bundleId).activate()
+    delay(1)
+    # TODO consider periodically chaging window set to see if the count stabilises.
 
   newWindowIds = executeReportingNewWindowIds bundleId, ->
     open(bundleId, resourceUrl)
 
   # CASE no new windows
-
   # CASE more than 1 new window
+  msg = null
+  if newWindowIds.length != 1
+    msg = "unexpected count of new window ids: #{newWindowIds}"
 
   newWindowId = newWindowIds.reverse()[0]
 
   return {
     new_window:
       id: newWindowId
+    msg: msg
   }
 
 
