@@ -27,7 +27,7 @@ module.exports =
 (bundleId, resourceUrls) ->
   
   if resourceUrls.length != 1
-    throw Error("new-window using `open`only supports 1 resource url.")
+    throw Error("new-window using `open` only supports 1 resource url.")
 
   resourceUrl = resourceUrls[0]
 

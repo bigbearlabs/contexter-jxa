@@ -46,7 +46,8 @@ global.main = (argv) ->
     return JSON.stringify({results})
 
   catch e
-    messages.push "error closing window using default impl: #{JSON.stringify(e)}"
+
+    messages.push "error closing window using default impl: #{JSON.stringify(e)}; using fallback impl"
 
     if DEBUG
       debugger

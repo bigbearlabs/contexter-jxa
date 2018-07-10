@@ -1,5 +1,12 @@
-module.exports = 
-  (fns) ->
+module.exports =
+
+
+  returnFirstSuccessful = (fns) ->
+    ###
+    # @fns a list of functions.
+    # @return the result of the first successfully executed function.
+    ###
+
     i = 0
     exceptions = []
     while i < fns.length
