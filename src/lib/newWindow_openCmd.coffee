@@ -10,6 +10,15 @@
 
 
 executeReportingNewWindowIds = require('./executeReportingNewWindowIds')
+runCmd = require('./runCmd')
+
+
+
+#== quick-and-dirty test harness method.
+global.main = (argv) ->
+  bundleId = "com.torusknot.SourceTreeNotMAS"  # PARAM
+  resourceUrls = [ "file:///Users/ilo/src/bigbearlabs/contexter" ] # PARAM
+  module.exports(bundleId, resourceUrls)
 
 
 
@@ -55,21 +64,4 @@ module.exports =
 open = (bundleId, resourceUrl) ->
   # run shell command to `open <resourceUrl>`.
   cmd = "open -b #{bundleId} #{resourceUrl}"
-  sh(cmd)
-
-
-
-
-sh = (cmdString) ->
-  app = Application.currentApplication()
-  app.includeStandardAdditions = true
-  app.doShellScript(cmdString)
-
-
-
-
-#== quick-and-dirty test harness method.
-global.main = (argv) ->
-  bundleId = "com.torusknot.SourceTreeNotMAS"  # PARAM
-  resourceUrls = [ "file:///Users/ilo/src/bigbearlabs/contexter" ] # PARAM
-  module.exports(bundleId, resourceUrls)
+  runCmd(cmd)

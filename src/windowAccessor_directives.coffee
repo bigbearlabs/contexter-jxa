@@ -1,4 +1,5 @@
 returnFirstSuccessful = require('./lib/returnFirstSuccessful')
+runCmd = require('./lib/runCmd')
 
 
 # directives for app-specific operations to override those defined in `baseAccessor`.
@@ -68,30 +69,3 @@ module.exports = directives =
     getCurrentElementIndex: (window, elements) ->
       currentId = window.currentSession().id()
       return elements.map((e)-> e.id()).indexOf(currentId)
-
-
-#= pvt, util
-
-runCmd = (cmd) ->
-  NSUTF8StringEncoding = 4
-  pipe = $.NSPipe.pipe
-  file = pipe.fileHandleForReading
-  # NSFileHandle
-  task = $.NSTask.alloc.init
-  task.launchPath = '/bin/bash'
-  task.arguments = [
-    '-c'
-    cmd
-  ]
-  # console.log(cmd)
-  task.standardOutput = pipe
-  # if not specified, literally writes to file handles 1 and 2
-  task.launch
-  # Run the command `ps aux`
-  data = file.readDataToEndOfFile
-  # NSData
-  file.closeFile
-  # Call -[[NSString alloc] initWithData:encoding:]
-  data = $.NSString.alloc.initWithDataEncoding(data, NSUTF8StringEncoding)
-  ObjC.unwrap data
-  # Note we have to unwrap the NSString instance
