@@ -98,10 +98,10 @@ elementsFrom = (window, windowAccessor) ->
       bounds = window.bounds()
 
       {
-        name: windowAccessor.getElementName(element)
+        title: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
         tabId: element.tabId
-        tab_index: index
+        tab_index: index   # FIXME inconsistent key foramt
         current: isCurrent
         frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
@@ -113,7 +113,7 @@ elementsFrom = (window, windowAccessor) ->
 
     [
       err: e
-      name: windowAccessor.getName(window)
+      title: windowAccessor.getName(window)
 
       windowId: String(windowAccessor.getId(window))
     ]
@@ -155,7 +155,7 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
 
       return {
         url: w.attributes['AXDocument'].value()
-        name: w.attributes['AXTitle'].value()
+        title: w.attributes['AXTitle'].value()
         frame: "{{" + w.position() + "}, {" + w.size() + "}}"
         windowId: windowId
       }
