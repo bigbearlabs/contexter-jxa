@@ -35,22 +35,18 @@ baseAccessor =
   # the default implementation returns either the single element or the first element marked as 'current'.
   getAnchor: (elements) ->
     if elements.length == 1
-      elements[0]
+      return elements[0]
  
-    else
-      # for multiple elements, return the one marked as current.
-      if currentElem = elements.find((e) ->
-          if e and e.current
-            e.current
-          else
-            false
-          )
-        currentElem
-      else
-        throw JSON.stringify {
-          msg: "cx-jxa: no element marked as current"
-          data: elements
-        }
+    # for multiple elements, return the one marked as current.
+    if currentElem = elements.find((e) ->
+      e?.current
+    )
+      return currentElem
+
+    throw JSON.stringify {
+      msg: "cx-jxa: no element marked as current"
+      data: elements
+    }
 
   # return elements of a window.
   # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
@@ -74,13 +70,13 @@ baseAccessor =
   getId: (window) ->
     window.id()
 
-  getName: (window) ->
+  getTitle: (window) ->
     window.name()
 
   # return index of the window's element which is frontmost.
   getCurrentElementIndex: (window, elements) ->
     returnFirstSuccessful [
-      -> 
+      ->
         window.currentTab().index() - 1
       ->
         # for chrome, use activeTab instead.

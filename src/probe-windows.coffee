@@ -84,14 +84,16 @@ readWindows = (bundleId, filterWindowId, windowAccessor) ->
   return { windows }
 
 elementsFrom = (window, windowAccessor) ->
-  try
-    elements = windowAccessor.getElements(window)
-    currentTabIndex = windowAccessor.getCurrentElementIndex(window, elements)
+  elements = windowAccessor.getElements(window)
+  currentTabIndex = windowAccessor.getCurrentElementIndex(window, elements)
 
-    return elements.map (element) ->
+  return elements.map (element) ->
+
+    try
+
       index = elements.indexOf(element)
-      isCurrent = 
-        if currentTabIndex? 
+      isCurrent =
+        if currentTabIndex?
           currentTabIndex == index
         else
           null
@@ -108,15 +110,16 @@ elementsFrom = (window, windowAccessor) ->
         windowId: String(windowAccessor.getId(window))
       }
 
-  catch e
-    debugger
+    catch e
+      debugger
 
-    [
-      err: e
-      title: windowAccessor.getName(window)
+      return {
+        err: [e.message, e]
+        title: windowAccessor.getTitle(window)
 
-      windowId: String(windowAccessor.getId(window))
-    ]
+        windowId: String(windowAccessor.getId(window))
+      }
+
 
 
 # read using system events.
