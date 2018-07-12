@@ -101,7 +101,7 @@ elementsFrom = (window, windowAccessor) ->
         title: windowAccessor.getElementName(element)
         url: windowAccessor.getUrl(element)
         tabId: element.tabId
-        tab_index: index   # FIXME inconsistent key foramt
+        tabIndex: index
         current: isCurrent
         frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
