@@ -31,6 +31,8 @@ global.main = (argv) ->
     bundleId = args.bundleId ||
       throw Error("e5: missing or bad argument: bundleId")
 
+    appBundlePath = args.appBundlePath
+
     resourceUrls =
       if args.url
         [args.url]
@@ -41,7 +43,11 @@ global.main = (argv) ->
             
       # err = "e4: no new_window directive for #{bundleId}"
 
-    app = Application(bundleId)
+    app = 
+      if appBundlePath?
+        Application(appBundlePath)
+      else
+        Application(bundleId)
 
     windowMaker = windowMaker(bundleId)
 
@@ -56,7 +62,7 @@ global.main = (argv) ->
       catch e
         messages.push("using scripting API failed; falling back to openCmd. error: #{e}")
 
-        newWindow_openCmd(bundleId, resourceUrls)
+        newWindow_openCmd(resourceUrls, {bundleId, bundlePath: appBundlePath})
 
         # TODO for consistency, we should eventually fold the _openCmd impl
         # into the window maker directives with a defaulting mechanism
@@ -92,6 +98,3 @@ newWindow = (app, resourceUrls, windowMaker) ->
     new_window:
       id: windowId
   }
-
-
-

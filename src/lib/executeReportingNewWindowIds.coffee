@@ -34,6 +34,7 @@ sleepFor = `
 
 ObjC.import('Cocoa')
 
+# FIXME ambigious in the case of multiple processes with same bid.
 queryCGWindows = (bundleId) ->
   # $.NSBeep()
   list = $.CGWindowListCopyWindowInfo($.kCGWindowListExcludeDesktopElements, $.kCGNullWindowID)
@@ -44,6 +45,7 @@ queryCGWindows = (bundleId) ->
       pid = cgInfo["kCGWindowOwnerPID"]
       runningAppForPid = $.NSRunningApplication.runningApplicationWithProcessIdentifier(pid)
       runningAppBundleId = ObjC.unwrap(runningAppForPid.bundleIdentifier)
-      runningAppBundleId == bundleId
+
+      return runningAppBundleId == bundleId
 
   return filteredList

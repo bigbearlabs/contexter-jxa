@@ -24,22 +24,27 @@ global.main = (argv) ->
 
 module.exports =
 
-(bundleId, resourceUrls) ->
+newWindow_openCmd = (resourceUrls, handlerSpecifier) ->
   
   if resourceUrls.length != 1
     throw Error("new-window using `open` only supports 1 resource url.")
 
   resourceUrl = resourceUrls[0]
 
-  # launch app if it's not found and wait a little for it to warm up.
-  processForBid = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
-  if processForBid.length == 0
-    Application(bundleId).activate()
-    delay(1)
-    # TODO consider periodically chaging window set to see if the count stabilises.
+  bundleId = handlerSpecifier.bundleId ||
+    throw Error("new-window using `open` requires bundle id.")
+
+  bundlePath = handlerSpecifier.bundlePath
+
+  # # launch app if it's not found and wait a little for it to warm up.
+  # processesForBid = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
+  # if processesForBid.length == 0
+  #   Application(bundleId).activate()
+  #   delay(1)
+  #   # TODO consider periodically chaging window set to see if the count stabilises.
 
   newWindowIds = executeReportingNewWindowIds bundleId, ->
-    open(bundleId, resourceUrl)
+    open(bundleId, bundlePath, resourceUrl)
 
   # CASE no new windows
   # CASE more than 1 new window
@@ -61,7 +66,13 @@ module.exports =
 #== extractables
 
 
-open = (bundleId, resourceUrl) ->
+open = (bundleId, bundlePath, resourceUrl) ->
   # run shell command to `open <resourceUrl>`.
-  cmd = "open -b #{bundleId} #{resourceUrl}"
+
+  cmd =
+    if bundlePath?
+      "open -a '#{bundlePath}' #{resourceUrl}"
+    else
+      "open -b #{bundleId} #{resourceUrl}"
+      
   runCmd(cmd)
