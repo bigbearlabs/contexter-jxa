@@ -34,6 +34,9 @@ baseAccessor =
   # return one of the elements of a window which url is bookmarked.
   # the default implementation returns either the single element or the first element marked as 'current'.
   getAnchor: (elements) ->
+    if elements.length == 0
+      return null
+      
     if elements.length == 1
       return elements[0]
  

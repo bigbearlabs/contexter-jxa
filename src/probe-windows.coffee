@@ -48,7 +48,7 @@ global.main = (argv) ->
         try
           readWindows(bundleId, filterWindowId, accessor)
         catch e
-          trace e.stack
+          trace toString({ msg: e.toString(), stack: e.stack })
           throw e
       ->
         readWindowsWithSystemEvents(bundleId, filterWindowId)
@@ -66,59 +66,80 @@ readWindows = (bundleId, filterWindowId, windowAccessor) ->
   windows =
     # array of windows containing elements (windowId, url, name).
     windowAccessor
+      # get the windows
       .getWindows(application)
 
+      # map to elements
       .map (window) ->
         elementsFrom window, windowAccessor
 
-      .filter (window) ->
-        if filterWindowId
-          window.elements[0].windowId == filterWindowId
+      # filter to the window id
+      .filter (windowElements) ->
+        if filterWindowId?
+          return windowElements[0].windowId == filterWindowId  # UGH assuming first element is authoritative
         else
-          true
+          return true
 
+      # map to results
       .map (elements) ->
+        anchorElement = windowAccessor.getAnchor(elements)
+
         elements: elements
-        anchor: windowAccessor.getAnchor(elements)
+        anchor: anchorElement
 
   return { windows }
 
+
 elementsFrom = (window, windowAccessor) ->
-  elements = windowAccessor.getElements(window)
-  currentTabIndex = windowAccessor.getCurrentElementIndex(window, elements)
+  try
 
-  return elements.map (element) ->
+    elements = windowAccessor.getElements(window)
 
-    try
+    currentTabIndex = 
+      if elements.length > 0
+        windowAccessor.getCurrentElementIndex(window, elements)
+      else
+        -1
 
-      index = elements.indexOf(element)
-      isCurrent =
-        if currentTabIndex?
-          currentTabIndex == index
-        else
-          null
-      bounds = window.bounds()
+    return elements.map (element) ->
 
-      {
-        title: windowAccessor.getElementName(element)
-        url: windowAccessor.getUrl(element)
-        tabId: element.tabId
-        tabIndex: index
-        current: isCurrent
-        frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
+      try
 
-        windowId: String(windowAccessor.getId(window))
-      }
+        index = elements.indexOf(element)
+        isCurrent =
+          if currentTabIndex?
+            currentTabIndex == index
+          else
+            null
+        bounds = window.bounds()
 
-    catch e
-      debugger
+        return {
+          title: windowAccessor.getElementName(element)
+          url: windowAccessor.getUrl(element)
+          tabId: element.tabId
+          tabIndex: index
+          current: isCurrent
+          frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
-      return {
-        err: [e.message, e]
-        title: windowAccessor.getTitle(window)
+          windowId: String(windowAccessor.getId(window))
+        }
 
-        windowId: String(windowAccessor.getId(window))
-      }
+      catch e
+        debugger
+
+        return {
+          err: [e.message, e]
+          title: windowAccessor.getTitle(window)
+
+          windowId: String(windowAccessor.getId(window))
+        }
+
+  catch e
+    return [
+      err: [e.message, e]
+      title: windowAccessor.getTitle(window)
+      windowId: String(windowAccessor.getId(window))
+    ]
 
 
 
@@ -178,28 +199,12 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
 
 ##
 ## helper functions
+## TODO factor out and make more reusable / consistent.
 ##
 
 trace = (out) ->
-  # DEV uncomment to see logging statements.
+  # DEV uncomment to see logging statements. make sure to comment back, since the output to stdout will break parsing in the pipeline.
   # console.log out
 
 toString = (obj) ->
   JSON.stringify obj, null, '  '
-
-
-# # FIXME replace with a require graph: probe -> <app-bundle-id>/window-accessor.coffee -> window-accessor.coffee
-# # or #windowAccessor -> WindowAccessor -> <app-bundle-id>/window-accessor.coffee
-# # 
-# # merge the object provided by bundle-specific script to the base accessor instance.
-# # if a global property `windowAccessor` exists, its accessors will be merged into a WindowAccessor instance.
-# windowAccessor = (app) ->
-#   baseAccessor = new WindowAccessor()
-
-#   if @windowAccessor and @windowAccessor.bundleId == app
-#     Object.getOwnPropertyNames(@windowAccessor).forEach (propertyName) ->
-#       propertyVal = @windowAccessor[propertyName]
-#       baseAccessor[propertyName] = propertyVal
-#       trace "copied #{propertyName} to #{JSON.stringify(baseAccessor)}"
-    
-#   return baseAccessor
