@@ -60,34 +60,42 @@ global.main = (argv) ->
 
 # read window info using the app's applescript dictionary.
 readWindows = (bundleId, filterWindowId, windowAccessor) ->
-  application = Application(bundleId)
-  # NOTE this will launch the app, if it's not running. This was an occasional headache during development where there were different versions of the same app.
 
-  windows =
-    # array of windows containing elements (windowId, url, name).
-    windowAccessor
-      # get the windows
-      .getWindows(application)
+  applications = cocoa_runningApps(bundleId)
 
-      # map to elements
-      .map (window) ->
-        elementsFrom window, windowAccessor
+  windows = 
+    applications.map (app) ->
 
-      # filter to the window id
-      .filter (windowElements) ->
-        if filterWindowId?
-          return windowElements[0].windowId == filterWindowId  # UGH assuming first element is authoritative
-        else
-          return true
+      # array of windows containing elements (windowId, url, name).
+      windowAccessor
+        # get the windows
+        .getWindows(app)
+  
+  windows = [].concat(windows...)
 
-      # map to results
-      .map (elements) ->
-        anchorElement = windowAccessor.getAnchor(elements)
+  windowData =
 
+    # map to elements
+    windows.map (window) ->
+      elementsFrom window, windowAccessor
+
+    # filter to the window id
+    .filter (windowElements) ->
+      if filterWindowId?
+        return windowElements[0].windowId == filterWindowId  # UGH assuming first element is authoritative
+      else
+        return true
+
+    # map to results
+    .map (elements) ->
+      anchorElement = windowAccessor.getAnchor(elements)
+
+      return {
         elements: elements
         anchor: anchorElement
+      }
 
-  return { windows }
+  return { windows: windowData }
 
 
 elementsFrom = (window, windowAccessor) ->
@@ -208,3 +216,25 @@ trace = (out) ->
 
 toString = (obj) ->
   JSON.stringify obj, null, '  '
+
+
+ObjC.import('AppKit')
+
+cocoa_runningApps = (bundleId) ->   # string
+
+  apps = $.NSWorkspace.sharedWorkspace.runningApplications # Note these never take () unless they have arguments
+  apps = ObjC.unwrap(apps) # Unwrap the NSArray instance to a normal JS array
+
+  matchingApps = apps.filter (app) ->
+    ObjC.unwrap(app.bundleIdentifier) == bundleId
+
+  pids = matchingApps.map (runningApp) -> ObjC.unwrap(runningApp.processIdentifier)
+
+  return pids.map (pid) -> Application(pid)
+
+
+applicationsFor = (bundleId) ->
+  # to match, for each running app with pid, compare against Application(pid).
+  appProcesses = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })()
+  pids = appProcesses.map( (p) -> p.unixId() )
+  jxaAppsForPid = pids.map( (pid) -> Application(pid) )
