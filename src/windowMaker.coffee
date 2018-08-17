@@ -1,6 +1,7 @@
 returnFirstSuccessful = require('./lib/returnFirstSuccessful')
 directives = require('./windowMaker_directives')
 merged = require('./lib/merged')
+paths = require('./lib/paths')
 
 module.exports =
 
@@ -16,6 +17,14 @@ module.exports =
 
 
 baseMaker =
+  newWindowWithResources: (app, resourceUrls) ->
+    window = windowMaker.createWindow(app)
+    # delay(0.1)
+
+    windowMaker.loadResources(app, window, resourceUrls)
+
+    return window
+
   createWindow: (app) -> return app.Document().make()
   loadResources: () -> @loadFirstResourceAsTargetPath(arguments...)
 
@@ -37,12 +46,3 @@ baseMaker.loadFirstResourceAsTargetPath = (app, window, resourceUrls) ->
   window.properties = {
     target: Path(firstPath)
   }
-
-
-## UTIL
-
-paths = (urlStrings) ->  # TACTICAL
-  urlStrings.map (s) ->
-    s2 = s.replace(/^file:\/\//, "")  # file:///xyz -> /xyz
-    #   .replace("\"", "\\\"")  # quote '"'
-    # return "\"#{s2}\""  # "/xyz"

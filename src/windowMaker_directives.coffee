@@ -1,4 +1,28 @@
-module.exports = directives =
+paths = require('./lib/paths')
+
+
+module.exports = 
+
+directives =
+  
+  "com.apple.dt.Xcode":
+    newWindowWithResources: (app, resourceUrls) ->
+      if resourceUrls.length < 1
+        throw Error("need at least 1 resourceUrls")
+
+      for url in resourceUrls
+        app.open(path(url))
+
+      url = resourceUrls[0]
+      newWindow = app.windows()
+        .filter (w) ->
+          w.document?().path?() == path(url)
+        [0]
+
+      if newWindow?
+        return newWindow
+      else
+        throw Error("couldnt' find new window after opeining #{resourceUrls}")
 
   "com.apple.finder":
     createWindow: (app) -> return app.FinderWindow().make()

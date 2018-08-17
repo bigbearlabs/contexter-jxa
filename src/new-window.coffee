@@ -87,10 +87,7 @@ global.main = (argv) ->
 
 newWindow = (app, resourceUrls, windowMaker) ->
 
-  window = windowMaker.createWindow(app)
-  # delay(0.1)
-
-  windowMaker.loadResources(app, window, resourceUrls)
+  window = windowMaker.newWindowWithResources(app, resourceUrls)
 
   windowId = window.id()
 
