@@ -18,10 +18,10 @@ module.exports =
 
 baseMaker =
   newWindowWithResources: (app, resourceUrls) ->
-    window = windowMaker.createWindow(app)
+    window = @createWindow(app)
     # delay(0.1)
 
-    windowMaker.loadResources(app, window, resourceUrls)
+    @loadResources(app, window, resourceUrls)
 
     return window
 
