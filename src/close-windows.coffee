@@ -131,7 +131,10 @@ findWindow = (appProcess, windowSpecifier) ->
 
     document = windowSpecifier.document
     if document?
-      return w.attributes["AXDocument"].value() is document
+      documentAxValue = w.attributes["AXDocument"].value()
+      # cover case where trailing slash is added.
+      return documentAxValue is document || documentAxValue is "#{document}/"
+
 
     title = windowSpecifier.title
     if title?
