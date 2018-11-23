@@ -46,6 +46,7 @@ module.exports = [{
     "probe-windows": "./src/probe-windows.coffee",
     "close-windows": "./src/close-windows.coffee",
     "make-window": "./src/make-window.coffee",
+    "make-tab": "./src/make-tab.coffee"
   },
 
   output: {
