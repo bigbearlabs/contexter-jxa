@@ -16,7 +16,7 @@ stacktracer = require 'sourcemapped-stacktrace'
 # that we need to remove before we can use it in a jxa context.
 
 
-DEBUG = true  # debug HACK
+# DEBUG = true  # debug HACK
 
 
 global.main = (argv) ->
@@ -68,7 +68,7 @@ global.main = (argv) ->
         # into the window maker directives with a defaulting mechanism
         # (so we can avoid enumerating all apps that must use this default directive)
 
-    if DEBUG
+    if DEBUG?
       result.trace = messages
       debugger
 
