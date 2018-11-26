@@ -28,7 +28,7 @@ global.main = (argv) ->
       throw Error("e5: missing or bad argument: bundleId")
     app = Application(bundleId)
 
-    resourceUrls = [args.url]
+    resourceUrl = args.url
 
     windowId = args.windowId            
     window = 
@@ -40,21 +40,7 @@ global.main = (argv) ->
 
     messages = []
 
-    result =
-
-      try
-        messages.push("using scripting API with maker for #{bundleId}")
-
-        addTab(app, window, resourceUrls, windowMaker)
-
-      catch e
-        # messages.push("using scripting API failed; falling back to openCmd. error: #{e}")
-
-        # newWindow_openCmd(resourceUrls, {bundleId, bundlePath: appBundlePath})
-
-        # # TODO for consistency, we should eventually fold the _openCmd impl
-        # # into the window maker directives with a defaulting mechanism
-        # # (so we can avoid enumerating all apps that must use this default directive)
+    result = addTab(app, window, resourceUrl, windowMaker)
 
     if DEBUG?
       result.trace = messages
@@ -73,8 +59,9 @@ global.main = (argv) ->
     # catch and error out, with more relevant src info (e.g. .coffee line)
   
 
-addTab = (app, window, resourceUrls, windowMaker) ->
-
-  windowMaker.loadResourcesInTabs(app, window, resourceUrls)
+addTab = (app, window, resourceUrl, windowMaker) ->
+  # library function updates (doesn't add) the the last tab, so add a tab to compensate.
+  window.tabs.push(app.Tab())
+  windowMaker.loadResourcesInTabs(app, window, [resourceUrl])
 
   return {}
