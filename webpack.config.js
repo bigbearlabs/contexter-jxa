@@ -46,7 +46,8 @@ module.exports = [{
     "probe-windows": "./src/probe-windows.coffee",
     "close-windows": "./src/close-windows.coffee",
     "make-window": "./src/make-window.coffee",
-    "make-tab": "./src/make-tab.coffee"
+    "make-tab": "./src/make-tab.coffee",
+    "safari-scan-tabs": "./src/safari-scan-tabs.js",
   },
 
   output: {
