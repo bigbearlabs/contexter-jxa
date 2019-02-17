@@ -40,19 +40,19 @@ global.main = (argv) ->
   accessor = windowAccessor(bundleId)
 
   windowProbeResult =
-  if accessor.skipSystemEventsProbe
-    readWindows(bundleId, filterWindowId, accessor)
-  else
-    returnFirstSuccessful [
-      ->
-        try
-          readWindows(bundleId, filterWindowId, accessor)
-        catch e
-          trace toString({ msg: e.toString(), stack: e.stack })
-          throw e
-      ->
-        readWindowsWithSystemEvents(bundleId, filterWindowId)
-    ]
+    if accessor.skipSystemEventsProbe
+      readWindows(bundleId, filterWindowId, accessor)
+    else
+      returnFirstSuccessful [
+        ->
+          try
+            readWindows(bundleId, filterWindowId, accessor)
+          catch e
+            trace toString({ msg: e.toString(), stack: e.stack })
+            throw e
+        ->
+          readWindowsWithSystemEvents(bundleId, filterWindowId)
+      ]
 
   return toString(windowProbeResult)
 
