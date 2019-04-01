@@ -62,17 +62,17 @@ global.main = (argv) ->
 readWindows = (bundleId, filterWindowId, windowAccessor) ->
 
   applications = cocoa_runningApps(bundleId)
+  if applications.length == 0
+    throw Error("cx-jxa: no process for bundleId: #{bundleId}")
 
   windows = 
-    applications.map (app) ->
+    applications.flatMap (app) ->
 
       # array of windows containing elements (windowId, url, name).
       windowAccessor
         # get the windows
         .getWindows(app)
   
-  windows = [].concat(windows...)
-
   windowData =
 
     # map to elements
@@ -180,7 +180,7 @@ readWindowsWithSystemEvents = (bundleId, filterWindowId) ->
   windowsData = windows.map (w) ->
     try
       windowId = 
-        if w.attributes.name().indexOf('AXIdentifier') > -1 
+        if w.attributes.name().includes('AXIdentifier')
           String(w.attributes['AXIdentifier'].value())
         else
           ""
