@@ -101,6 +101,8 @@ readWindows = (bundleId, filterWindowId, windowAccessor) ->
 elementsFrom = (window, windowAccessor) ->
   try
 
+    windowId = String(windowAccessor.getId(window))
+
     elements = windowAccessor.getElements(window)
 
     currentTabIndex = 
@@ -108,6 +110,9 @@ elementsFrom = (window, windowAccessor) ->
         windowAccessor.getCurrentElementIndex(window, elements)
       else
         -1
+
+    bounds = window.bounds()
+    frame = "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
 
     return elements.map (element) ->
 
@@ -119,7 +124,6 @@ elementsFrom = (window, windowAccessor) ->
             currentTabIndex == index
           else
             null
-        bounds = window.bounds()
 
         return {
           title: windowAccessor.getElementName(element)
@@ -127,9 +131,9 @@ elementsFrom = (window, windowAccessor) ->
           tabId: element.tabId
           tabIndex: index
           current: isCurrent
-          frame: "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"
+          frame: frame
 
-          windowId: String(windowAccessor.getId(window))
+          windowId: windowId
         }
 
       catch e
