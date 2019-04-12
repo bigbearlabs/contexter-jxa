@@ -22,6 +22,7 @@
 
 windowAccessor = require('./windowAccessor')
 returnFirstSuccessful = require('./lib/returnFirstSuccessful')
+runningApps = require('./lib/runningApps')
 
 
 
@@ -61,7 +62,7 @@ global.main = (argv) ->
 # read window info using the app's applescript dictionary.
 readWindows = (bundleId, filterWindowId, windowAccessor) ->
 
-  applications = cocoa_runningApps(bundleId)
+  applications = runningApps(bundleId)
   if applications.length == 0
     throw Error("cx-jxa: no process for bundleId: #{bundleId}")
 
@@ -220,25 +221,3 @@ trace = (out) ->
 
 toString = (obj) ->
   JSON.stringify obj, null, '  '
-
-
-ObjC.import('AppKit')
-
-cocoa_runningApps = (bundleId) ->   # string
-
-  apps = $.NSWorkspace.sharedWorkspace.runningApplications # Note these never take () unless they have arguments
-  apps = ObjC.unwrap(apps) # Unwrap the NSArray instance to a normal JS array
-
-  matchingApps = apps.filter (app) ->
-    ObjC.unwrap(app.bundleIdentifier) == bundleId
-
-  pids = matchingApps.map (runningApp) -> ObjC.unwrap(runningApp.processIdentifier)
-
-  return pids.map (pid) -> Application(pid)
-
-
-applicationsFor = (bundleId) ->
-  # to match, for each running app with pid, compare against Application(pid).
-  appProcesses = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })()
-  pids = appProcesses.map( (p) -> p.unixId() )
-  jxaAppsForPid = pids.map( (pid) -> Application(pid) )
