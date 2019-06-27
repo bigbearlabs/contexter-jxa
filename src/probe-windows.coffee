@@ -104,13 +104,9 @@ elementsFrom = (window, windowAccessor) ->
 
     windowId = String(windowAccessor.getId(window))
 
-    elements = windowAccessor.getElements(window)
-
-    currentTabIndex = 
-      if elements.length > 0
-        windowAccessor.getCurrentElementIndex(window, elements)
-      else
-        -1
+    elementsData = windowAccessor.getElementsData(window)
+    elements = elementsData.elements
+    currentTabIndex = elementsData.currentElementIndex
 
     bounds = window.bounds()
     frame = "{{#{bounds.x}, #{bounds.y}}, {#{bounds.width}, #{bounds.height}}}"

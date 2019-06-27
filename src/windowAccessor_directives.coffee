@@ -2,8 +2,49 @@ returnFirstSuccessful = require('./lib/returnFirstSuccessful')
 runCmd = require('./lib/runCmd')
 
 
+# TODO add bundle id mappings such that chrome canary uses directive for chrome, safari tech preview uses that for safari etc.
+
+
+pinnedTabCount = null  # hackish global to count pinned tabs only once per lifecycle.
+
 # directives for app-specific operations to override those defined in `baseAccessor`.
 module.exports = directives =
+
+  "com.apple.Safari":
+    # obtain count of pinned tabs in order to exclude from elements to probe.
+    getElementsData: (window) ->
+      pinnedTabCount = pinnedTabCount || @getSafariPinnedTabCount()
+
+      elements = window.tabs().slice(pinnedTabCount)
+      currentElementIndex = window.currentTab().index() - 1 - pinnedTabCount 
+
+      return {elements, currentElementIndex}
+
+    getSafariPinnedTabCount: () =>
+      bundleId = "com.apple.Safari"
+      app = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
+      window = app.windows[0]
+      unless window?
+        throw Error('cx-jxa: no safari window in current space')
+
+      tabGroup = window.groups[0]
+      tabs = tabGroup.radioButtons
+      descriptions = tabs.roleDescription()[0]
+
+      pinnedCount = descriptions.filter((desc) => 
+        desc == "pinned tab"
+      ).length
+
+      return pinnedCount
+
+  "com.google.Chrome":
+    getElementsData: (window) =>
+      # browser-style script vocabulary
+      elements = window.tabs()
+      currentElementIndex =
+        window.activeTabIndex() - 1 # chrome Version 56.0.2913.3 canary (64-bit)
+
+      return {elements, currentElementIndex}
 
   "com.apple.dt.Xcode":
 
@@ -55,10 +96,9 @@ module.exports = directives =
       catch e
         debugger
 
-    getElements: (window) ->
+    getElementsData: (window) ->
       # for now, just the frontmost tab of an iterm window, since returning all elements will potentially be too slow.
-      window
-        .tabs()
+      elements = window.tabs()
         .map (t) -> t.currentSession()
         .map (s) -> 
           id: s.id,
@@ -66,6 +106,7 @@ module.exports = directives =
           name: s.name,
           tty: s.tty
 
-    getCurrentElementIndex: (window, elements) ->
       currentId = window.currentSession().id()
-      return elements.map((e)-> e.id()).indexOf(currentId)
+      currentElementIndex = elements.map((e)-> e.id()).indexOf(currentId)
+
+      return {elements, currentElementIndex}

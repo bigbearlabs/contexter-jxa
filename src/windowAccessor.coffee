@@ -51,6 +51,18 @@ baseAccessor =
       data: elements
     }
 
+  getElementsData: (window) ->
+    elements = @getElements(window)
+
+    currentElementIndex = 
+      if elements.length > 0
+        @getCurrentElementIndex(window, elements)
+      else
+        -1
+
+    return { elements, currentElementIndex }
+
+
   # return elements of a window.
   # elements can be anything that participates in a focus order, such as tabs, folder or mailbox.
   # if returning only one element for a window (simplest implementation), make sure it's in an array.
@@ -60,12 +72,14 @@ baseAccessor =
         # finder-style script vocabulary
         [ window.target() ]
       ->
-        # browser-style script vocabulary
-        window.tabs()
-      ->
         # vocabulary for doc windows
         [ window.document() ]
     ]
+
+  # return index of the window's element which is frontmost.
+  getCurrentElementIndex: (window, elements) ->
+    # by default, the collection of elements shall contain only 1 element.
+    return 0
 
 
   # ## window-level accessors
@@ -76,17 +90,6 @@ baseAccessor =
   getTitle: (window) ->
     window.name()
 
-  # return index of the window's element which is frontmost.
-  getCurrentElementIndex: (window, elements) ->
-    returnFirstSuccessful [
-      ->
-        window.currentTab().index() - 1
-      ->
-        # for chrome, use activeTab instead.
-        window.activeTabIndex() - 1 # chrome Version 56.0.2913.3 canary (64-bit)
-      ->
-        null
-    ]
 
   # ## element-level accessors
 
