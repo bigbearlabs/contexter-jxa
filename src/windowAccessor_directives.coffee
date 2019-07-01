@@ -13,14 +13,15 @@ module.exports = directives =
   "com.apple.Safari":
     # obtain count of pinned tabs in order to exclude from elements to probe.
     getElementsData: (window) ->
-      pinnedTabCount = pinnedTabCount || @getSafariPinnedTabCount()
+      tabs = window.tabs()
 
-      elements = window.tabs().slice(pinnedTabCount)
+      pinnedTabCount = pinnedTabCount || (tabs.length - @getSafariUnpinnedTabCount())
+      elements = tabs.slice(pinnedTabCount)
       currentElementIndex = window.currentTab().index() - 1 - pinnedTabCount 
 
       return {elements, currentElementIndex}
 
-    getSafariPinnedTabCount: () =>
+    getSafariUnpinnedTabCount: () =>
       bundleId = "com.apple.Safari"
       app = Application('System Events').applicationProcesses.whose({ bundleIdentifier: bundleId })
       window = app.windows[0]
@@ -28,6 +29,11 @@ module.exports = directives =
         throw Error('cx-jxa: no safari window in current space')
 
       tabGroup = window.groups[0]
+
+      # exceptionally handle case where a 1-tab window doesn't show pinned sites.
+      if tabGroup()[0] == null
+        return 1
+
       tabs = tabGroup.radioButtons
       descriptions = tabs.roleDescription()[0]
 
@@ -35,7 +41,7 @@ module.exports = directives =
         desc == "pinned tab"
       ).length
 
-      return pinnedCount
+      return descriptions.length - pinnedCount
 
   "com.google.Chrome":
     getElementsData: (window) =>
