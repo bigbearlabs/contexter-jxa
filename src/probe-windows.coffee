@@ -73,19 +73,19 @@ readWindows = (bundleId, filterWindowId, windowAccessor) ->
       windowAccessor
         # get the windows
         .getWindows(app)
+        # filter to the window id
+        .filter (w) ->
+          if filterWindowId?
+            return String(windowAccessor.getId(w)) == filterWindowId  # UGH assuming first element is authoritative
+          else
+            return true
+
   
   windowData =
 
     # map to elements
     windows.map (window) ->
       elementsFrom window, windowAccessor
-
-    # filter to the window id
-    .filter (windowElements) ->
-      if filterWindowId?
-        return windowElements[0].windowId == filterWindowId  # UGH assuming first element is authoritative
-      else
-        return true
 
     # map to results
     .map (elements) ->
